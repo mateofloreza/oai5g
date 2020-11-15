@@ -21,7 +21,9 @@
 
 # Author: laurent THOMAS, Lionel GAUTHIER
 
-cmake_minimum_required (VERSION 3.0)
+# Ubuntu 16.04 has 3.5
+cmake_minimum_required (VERSION 2.8)
+project (OpenAirInterface LANGUAGES C CXX)
 
 include("macros.cmake")
 
@@ -49,6 +51,7 @@ include_directories(${CRYPTO_INCLUDE_DIRS})
 #uhd 4.0 and iris installs by default in /usr/local
 include_directories("/usr/local/include/")
 #use native cmake method as this package is not in pkg-config
+add_list2_option(RF_BOARD "EXMIMO" "RF head type" "None" "OAI_USRP" "OAI_BLADERF" "OAI_LMSSDR" "OAI_SIMU")
 if (${RF_BOARD} STREQUAL "OAI_USRP")
   find_package(Boost REQUIRED)
   include_directories(${LIBBOOST_INCLUDE_DIR})
@@ -159,7 +162,6 @@ set (OPENAIR3_DIR    ${OPENAIR_DIR}/openair3)
 set (OPENAIR_CMAKE   ${OPENAIR_DIR}/cmake_targets)
 set (OPENAIR_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY})
 
-project (OpenAirInterface)
 
 ##############################################
 # Base CUDA setting
@@ -678,8 +680,6 @@ add_library(F1AP ${F1AP_C_FILES} )
 ###################################
 add_list1_option(NB_ANTENNAS_RX "4" "Number of antennas in reception" "1" "2" "4")
 add_list1_option(NB_ANTENNAS_TX "4" "Number of antennas in transmission" "1" "2" "4")
-
-add_list2_option(RF_BOARD "EXMIMO" "RF head type" "None" "OAI_USRP" "OAI_BLADERF" "OAI_LMSSDR" "OAI_SIMU")
 
 add_list2_option(TRANSP_PRO "None" "Transport protocol type" "None" "ETHERNET")
 #NOKIA config enhancement
