@@ -54,7 +54,7 @@
 #include <targets/ARCH/rfsimulator/rfsimulator.h>
 
 #define PORT 4043 //default TCP port for this simulator
-#define CirSize 6144000 // 100ms is enough
+#define CirSize 61440000 //curently the circular buffer can hold 100 frames
 #define sampleToByte(a,b) ((a)*(b)*sizeof(sample_t))
 #define byteToSample(a,b) ((a)/(sizeof(sample_t)*(b)))
 
@@ -425,6 +425,7 @@ sin_addr:
   return 0;
 }
 
+extern uint64_t RFsim_PropDelay;
 static int rfsimulator_write_internal(rfsimulator_state_t *t, openair0_timestamp timestamp, void **samplesVoid, int nsamps, int nbAnt, int flags, bool alreadyLocked) {
   if (!alreadyLocked)
     pthread_mutex_lock(&Sockmutex);
@@ -732,7 +733,7 @@ static int rfsimulator_read(openair0_device *device, openair0_timestamp *ptimest
                       a,
                       ptr->channel_model,
                       nsamps,
-                      t->nextTimestamp,
+                      t->nextTimestamp-RFsim_PropDelay,
                       CirSize
                     );
         else { // no channel modeling
@@ -747,8 +748,8 @@ static int rfsimulator_read(openair0_device *device, openair0_timestamp *ptimest
           //LOG_I(HW, "nbAnt_tx %d\n",nbAnt_tx);
           for (int i=0; i < nsamps; i++) {//loop over nsamps
             for (int a_tx=0; a_tx<nbAnt_tx; a_tx++) { //sum up signals from nbAnt_tx antennas
-              out[i].r += (short)(ptr->circularBuf[((t->nextTimestamp+i)*nbAnt_tx+a_tx)%CirSize].r*H_awgn_mimo[a][a_tx]);
-              out[i].i += (short)(ptr->circularBuf[((t->nextTimestamp+i)*nbAnt_tx+a_tx)%CirSize].i*H_awgn_mimo[a][a_tx]);
+              out[i].r += (short)(ptr->circularBuf[((t->nextTimestamp-RFsim_PropDelay+i)*nbAnt_tx+a_tx)%CirSize].r*H_awgn_mimo[a][a_tx]);
+              out[i].i += (short)(ptr->circularBuf[((t->nextTimestamp-RFsim_PropDelay+i)*nbAnt_tx+a_tx)%CirSize].i*H_awgn_mimo[a][a_tx]);
             } // end for a_tx
           } // end for i (number of samps)
         } // end of no channel modeling
