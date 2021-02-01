@@ -444,7 +444,7 @@ bool nr_ul_preprocessor_phytest(module_id_t module_id, frame_t frame, sub_frame_
               tda,
               tdaList->list.count);
   int K2 = get_K2(scc,sched_ctrl->active_ubwp, tda, mu);
-  const int sched_frame = frame + (slot + K2 >= nr_slots_per_frame[mu]);
+  const int sched_frame = (frame + (slot + K2) / nr_slots_per_frame[mu]) % MAX_FRAME_NUMBER;
   const int sched_slot = (slot + K2) % nr_slots_per_frame[mu];
   /* check if slot is UL, and that slot is 8 (assuming K2=6 because of UE
    * limitations).  Note that if K2 or the TDD configuration is changed, below

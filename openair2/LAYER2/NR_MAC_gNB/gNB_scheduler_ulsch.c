@@ -895,19 +895,22 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
   }
 }
 
+extern uint16_t NTN_gNB_k2;
+
 long get_K2(NR_ServingCellConfigCommon_t *scc,NR_BWP_Uplink_t *ubwp, int time_domain_assignment, int mu) {
   DevAssert(scc);
   const NR_PUSCH_TimeDomainResourceAllocation_t *tda_list = ubwp ?
     ubwp->bwp_Common->pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list.array[time_domain_assignment]:
     scc->uplinkConfigCommon->initialUplinkBWP->pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list.array[time_domain_assignment];
   if (tda_list->k2)
-    return *tda_list->k2;
+    return *tda_list->k2+NTN_gNB_k2;
   else if (mu < 2)
-    return 1;
+    return 1+NTN_gNB_k2;
   else if (mu == 2)
-    return 2;
+    return 2+NTN_gNB_k2;
   else
-    return 3;
+    return 3+NTN_gNB_k2;
+
 }
 
 bool nr_UE_is_to_be_scheduled(module_id_t mod_id, int CC_id, int UE_id, frame_t frame, sub_frame_t slot)
@@ -1408,7 +1411,7 @@ bool nr_fr1_ulsch_preprocessor(module_id_t module_id, frame_t frame, sub_frame_t
   if (tda < 0)
     return false;
   int K2 = get_K2(scc, sched_ctrl->active_ubwp, tda, mu);
-  const int sched_frame = frame + (slot + K2 >= nr_slots_per_frame[mu]);
+  const int sched_frame = (frame + (slot + K2) / nr_slots_per_frame[mu]) % MAX_FRAME_NUMBER;
   const int sched_slot = (slot + K2) % nr_slots_per_frame[mu];
 
   if (!is_xlsch_in_slot(nr_mac->ulsch_slot_bitmap[sched_slot / 64], sched_slot))

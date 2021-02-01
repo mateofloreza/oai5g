@@ -70,6 +70,8 @@
     {"do-prb-interpolation",     CONFIG_HLP_PRBINTER,    PARAMFLAG_BOOL,  iptr:&(UE->prb_interpolation),      defintval:0,           TYPE_INT,   0}, \
     {"ue-timing-correction-disable", CONFIG_HLP_DISABLETIMECORR, PARAMFLAG_BOOL, iptr:&(UE->no_timing_correction), defintval:0,      TYPE_INT,   0}, \
     {"P" ,                       CONFIG_HLP_PROPD,       0,               u64ptr:&RFsim_PropDelay,            defintval:0,           TYPE_UINT64,0}, \
+    {"ue_slot_Rx_Tx" ,           CONFIG_HLP_UESLOTRXTX,  0,               u16ptr:&NTN_UE_slot_Rx_to_Tx,       defintval:0,           TYPE_UINT16,0}, \
+    {"ue_k2" ,                   CONFIG_HLP_UEK2,        0,               u16ptr:&NTN_UE_k2,                  defintval:0,           TYPE_UINT16,0}, \
 }
 
 
