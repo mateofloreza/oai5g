@@ -46,10 +46,8 @@ void nr_fill_nfapi_pucch(module_id_t mod_id,
 {
   NR_UE_info_t *UE_info = &RC.nrmac[mod_id]->UE_info;
 
-  nfapi_nr_ul_tti_request_t *future_ul_tti_req =
-      &RC.nrmac[mod_id]->UL_tti_req_ahead[0][pucch->ul_slot];
-  AssertFatal(future_ul_tti_req->SFN == pucch->frame
-              && future_ul_tti_req->Slot == pucch->ul_slot,
+  nfapi_nr_ul_tti_request_t *future_ul_tti_req = &RC.nrmac[mod_id]->UL_tti_req_ahead[0][pucch->frame%MAX_NUM_UL_SCHED_FRAME][pucch->ul_slot];
+  AssertFatal(future_ul_tti_req->SFN == pucch->frame && future_ul_tti_req->Slot == pucch->ul_slot,
               "future UL_tti_req's frame.slot %d.%d does not match PUCCH %d.%d\n",
               future_ul_tti_req->SFN,
               future_ul_tti_req->Slot,
@@ -746,7 +744,7 @@ void nr_csi_meas_reporting(int Mod_idP,
       int bwp_start = NRRIV2PRBOFFSET(genericParameters->locationAndBandwidth,MAX_BWP_SIZE);
 
       // going through the list of PUCCH resources to find the one indexed by resource_id
-      uint16_t *vrb_map_UL = &RC.nrmac[Mod_idP]->common_channels[0].vrb_map_UL[sched_slot * MAX_BWP_SIZE];
+      uint16_t *vrb_map_UL = RC.nrmac[Mod_idP]->common_channels[0].vrb_map_UL[frame%MAX_NUM_UL_SCHED_FRAME][sched_slot];
       const int m = pucch_Config->resourceToAddModList->list.count;
       for (int j = 0; j < m; j++) {
         NR_PUCCH_Resource_t *pucchres = pucch_Config->resourceToAddModList->list.array[j];
@@ -1768,7 +1766,7 @@ int nr_acknack_scheduling(int mod_id,
     int second_hop_prb = resource->secondHopPRB!= NULL ?  *resource->secondHopPRB : 0;
     int nr_of_symbols = resource->format.choice.format0->nrofSymbols;
     if (resource->format.choice.format0->initialCyclicShift == 0) {
-      uint16_t *vrb_map_UL = &RC.nrmac[mod_id]->common_channels[CC_id].vrb_map_UL[pucch->ul_slot * MAX_BWP_SIZE];
+      uint16_t *vrb_map_UL = RC.nrmac[mod_id]->common_channels[CC_id].vrb_map_UL[pucch->frame%MAX_NUM_UL_SCHED_FRAME][pucch->ul_slot];
       for (int l=0; l<nr_of_symbols; l++) {
         uint16_t symb = 1 << (resource->format.choice.format0->startingSymbolIndex + l);
         int prb;
@@ -1848,7 +1846,7 @@ void nr_sr_reporting(int Mod_idP, frame_t SFN, sub_frame_t slot)
       NR_PUCCH_Resource_t *pucch_res = pucch_Config->resourceToAddModList->list.array[found];
       /* for the moment, can only handle SR on PUCCH Format 0 */
       DevAssert(pucch_res->format.present == NR_PUCCH_Resource__format_PR_format0);
-      nfapi_nr_ul_tti_request_t *ul_tti_req = &nrmac->UL_tti_req_ahead[0][slot];
+      nfapi_nr_ul_tti_request_t *ul_tti_req = &nrmac->UL_tti_req_ahead[0][SFN % MAX_NUM_UL_SCHED_FRAME][slot];
       bool nfapi_allocated = false;
       for (int i = 0; i < ul_tti_req->n_pdus; ++i) {
         if (ul_tti_req->pdus_list[i].pdu_type != NFAPI_NR_UL_CONFIG_PUCCH_PDU_TYPE)
