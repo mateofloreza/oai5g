@@ -7616,6 +7616,7 @@ is_ul_256QAM_supported(
          && *c->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->NCE->rf_Parameters_v1430->supportedBandCombination_v1430->list.array[0]->bandParameterList_v1430->list.array[0]->ul_256QAM_r14==LTE_BandParameters_v1430__ul_256QAM_r14_supported;
 }
 
+<<<<<<< HEAD
 int to_nr_rsrpq(long rsrpq_result,int nr_band) {
 
     switch(nr_band) {
