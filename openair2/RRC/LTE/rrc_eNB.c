@@ -3208,7 +3208,7 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
     if (MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 == NULL) exit(1);
 
     MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->present = LTE_MeasObjectNR_r15__ext1__bandNR_r15_PR_setup;
-    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = rrc_inst->nr_band;
+    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = RC.rrc[ctxt_pP->module_id]->nr_gnb_freq_band[0][0];
 
     ASN_SEQUENCE_ADD(&MeasObj_list->list, MeasObj2);
   }
@@ -6875,7 +6875,6 @@ char openair_rrc_eNB_configuration(
   }
 
   RC.rrc[ctxt.module_id]->nr_scg_ssb_freq = configuration->nr_scg_ssb_freq;
-  RC.rrc[ctxt.module_id]->nr_band = configuration->nr_band;
 
   openair_rrc_on(&ctxt);
 
