@@ -421,15 +421,15 @@ void fill_default_secondaryCellGroup(NR_ServingCellConfigCommon_t *servingcellco
  coreset->cce_REG_MappingType.present = NR_ControlResourceSet__cce_REG_MappingType_PR_nonInterleaved;
  coreset->precoderGranularity = NR_ControlResourceSet__precoderGranularity_sameAsREG_bundle;
 
- //coreset->tci_StatesPDCCH_ToAddList=calloc(1,sizeof(*coreset->tci_StatesPDCCH_ToAddList));
- //NR_TCI_StateId_t *tci[64];
- //for (int i=0;i<64;i++) {
- //  if ((bitmap>>(63-i))&0x01){
- //    tci[i]=calloc(1,sizeof(*tci[i]));
- //    *tci[i] = i;
- //    ASN_SEQUENCE_ADD(&coreset->tci_StatesPDCCH_ToAddList->list,tci[i]);
- //  }
- //}
+ coreset->tci_StatesPDCCH_ToAddList=calloc(1,sizeof(*coreset->tci_StatesPDCCH_ToAddList));
+ NR_TCI_StateId_t *tci[64];
+ for (int i=0;i<64;i++) {
+   if ((bitmap>>(63-i))&0x01){
+     tci[i]=calloc(1,sizeof(*tci[i]));
+     *tci[i] = i;
+     ASN_SEQUENCE_ADD(&coreset->tci_StatesPDCCH_ToAddList->list,tci[i]);
+   }
+ }
  coreset->tci_StatesPDCCH_ToReleaseList = NULL;
  coreset->tci_PresentInDCI = NULL;
  coreset->pdcch_DMRS_ScramblingID = NULL;
