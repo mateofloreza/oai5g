@@ -1426,6 +1426,7 @@ void nr_generate_Msg2(module_id_t module_idP, int CC_id, frame_t frameP, sub_fra
     dci_pdu->CceIndex = CCEIndex;
     dci_pdu->beta_PDCCH_1_0 = 0;
     dci_pdu->powerControlOffsetSS = 1;
+    dci_pdu->precodingAndBeamforming = pdsch_pdu_rel15->precodingAndBeamforming;
 
     dci_pdu_rel15_t dci_payload;
     dci_payload.frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
@@ -1807,6 +1808,7 @@ void nr_generate_Msg4(module_id_t module_idP, int CC_id, frame_t frameP, sub_fra
     dci_pdu->CceIndex = CCEIndex;
     dci_pdu->beta_PDCCH_1_0 = 0;
     dci_pdu->powerControlOffsetSS = 1;
+    dci_pdu->precodingAndBeamforming = pdsch_pdu_rel15->precodingAndBeamforming;
 
     dci_pdu_rel15_t dci_payload;
     dci_payload.frequency_domain_assignment.val = PRBalloc_to_locationandbandwidth0(pdsch_pdu_rel15->rbSize,
