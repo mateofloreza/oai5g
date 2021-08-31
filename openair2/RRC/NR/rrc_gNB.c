@@ -1855,10 +1855,10 @@ rrc_gNB_process_RRCConnectionReestablishmentComplete(
           i, ue_context_pP->ue_context.pduSession[i].status, "PDU_SESSION_STATUS_DONE");
   }
 
-  memset(buffer, 0, sizeof(buffer));
+  memset(buffer, 0, RRC_BUF_SIZE);
 
-  size = do_RRCReconfiguration(ctxt_pP, buffer, sizeof(buffer),
-                                xid,
+  size = do_RRCReconfiguration(ctxt_pP, buffer, RRC_BUF_SIZE,
+                                next_xid,
                                *SRB_configList2,
                                 DRB_configList,
                                 NULL,
