@@ -287,31 +287,24 @@ void nr_preprocessor_phytest(module_id_t module_id,
   /* find largest unallocated chunk */
   const int bwpSize = NRRIV2BW(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
   const int BWPStart = NRRIV2PRBOFFSET(sched_ctrl->active_bwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
-  int rbStart = 0;
-  int rbSize = 0;
   if (target_dl_bw>bwpSize)
     target_dl_bw = bwpSize;
   uint16_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
-  /* loop ensures that we allocate exactly target_dl_bw, or return */
-  while (true) {
-    /* advance to first free RB */
-    while (rbStart < bwpSize &&
-           (vrb_map[rbStart + BWPStart]&SL_to_bitmap(ps->startSymbolIndex, ps->nrOfSymbols)))
-      rbStart++;
-    rbSize = 1;
-    /* iterate until we are at target_dl_bw or no available RBs */
-    while (rbStart + rbSize < bwpSize &&
-           !(vrb_map[rbStart + rbSize + BWPStart]&SL_to_bitmap(ps->startSymbolIndex, ps->nrOfSymbols)) &&
-           rbSize < target_dl_bw)
-      rbSize++;
-    /* found target_dl_bw? */
-    if (rbSize == target_dl_bw)
-      break;
-    /* at end and below target_dl_bw? */
-    if (rbStart + rbSize >= bwpSize)
-      return;
-    rbStart += rbSize;
-  }
+
+  /* allocate up to the target_dl_bw */
+  /* advance to first free RB */
+  int rbStart = (bwpSize - target_dl_bw) / 2;
+  while (rbStart < (bwpSize + target_dl_bw) / 2 && vrb_map[rbStart + BWPStart])
+    rbStart++;
+
+  /* iterate until we are at target_dl_bw or no available RBs */
+  int rbSize = 0;
+  while (rbStart + rbSize < (bwpSize + target_dl_bw) / 2 && !vrb_map[rbStart + rbSize + BWPStart])
+    rbSize++;
+
+  /* found no free RBs? */
+  if (rbSize == 0)
+    return;
 
   sched_ctrl->num_total_bytes = 0;
   const int lcid = DL_SCH_LCID_DTCH;
@@ -464,9 +457,6 @@ bool nr_ul_preprocessor_phytest(module_id_t module_id, frame_t frame, sub_frame_
       || ps->num_dmrs_cdm_grps_no_data != num_dmrs_cdm_grps_no_data)
     nr_set_pusch_semi_static(scc, sched_ctrl->active_ubwp, NULL,dci_format, tda, num_dmrs_cdm_grps_no_data, ps);
 
-  uint16_t rbStart = 0;
-  uint16_t rbSize;
-
   const int bw = NRRIV2BW(sched_ctrl->active_ubwp ?
                           sched_ctrl->active_ubwp->bwp_Common->genericParameters.locationAndBandwidth :
                           scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
@@ -475,22 +465,29 @@ bool nr_ul_preprocessor_phytest(module_id_t module_id, frame_t frame, sub_frame_
                                        scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
 
   if (target_ul_bw>bw)
-    rbSize = bw;
-  else
-    rbSize = target_ul_bw;
+    target_ul_bw = bw;
+
+  if (target_ul_bw == 0)
+    return false;
 
   uint16_t *vrb_map_UL = RC.nrmac[module_id]->common_channels[CC_id].vrb_map_UL[sched_frame%MAX_NUM_UL_SCHED_FRAME][sched_slot];
   const uint16_t symb = ((1 << ps->nrOfSymbols) - 1) << ps->startSymbolIndex;
-  for (int i = rbStart; i < rbStart + rbSize; ++i) {
-    if ((vrb_map_UL[i+BWPStart] & symb) != 0) {
-      LOG_E(MAC,
-            "%s(): %4d.%2d RB %d is already reserved, cannot schedule UE\n",
-            __func__,
-            frame,
-            slot,
-            i);
-      return false;
-    }
+
+  uint16_t rbStart = (bw - target_ul_bw) / 2;
+  uint16_t rbSize = 0;
+  while (rbStart + rbSize < (bw + target_ul_bw) / 2) {
+    if ((vrb_map_UL[rbStart + rbSize + BWPStart] & symb) != 0)
+      break;
+    rbSize++;
+  }
+
+  if (rbSize == 0) {
+    LOG_E(MAC,
+          "%s(): %4d.%2d all RBs already reserved, cannot schedule UE\n",
+          __func__,
+          frame,
+          slot);
+    return false;
   }
 
   sched_ctrl->sched_pusch.slot = sched_slot;
@@ -560,6 +557,6 @@ bool nr_ul_preprocessor_phytest(module_id_t module_id, frame_t frame, sub_frame_
                      sched_ctrl->aggregation_level);
 
   for (int rb = rbStart; rb < rbStart + rbSize; rb++)
-    vrb_map_UL[rb+BWPStart] = 1;
+    vrb_map_UL[rb+BWPStart] |= symb;
   return true;
 }
