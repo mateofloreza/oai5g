@@ -780,16 +780,23 @@ void nr_generate_Msg3_retransmission(module_id_t module_idP, int CC_id, frame_t 
 
     int BWPStart = nr_mac->type0_PDCCH_CSS_config[ra->beam_id].cset_start_rb;
     int BWPSize  = nr_mac->type0_PDCCH_CSS_config[ra->beam_id].num_rbs;
+
+    /* search msg3_nb_rb free RBs */
+    int rbSize = 0;
     int rbStart = 0;
-    for (int i = 0; (i < ra->msg3_nb_rb) && (rbStart <= (BWPSize - ra->msg3_nb_rb)); i++) {
-      if (vrb_map_UL[rbStart + BWPStart + i]) {
-        rbStart += i;
-        i = 0;
+    while (rbSize < ra->msg3_nb_rb) {
+      rbStart += rbSize; /* last iteration rbSize was not enough, skip it */
+      rbSize = 0;
+      while (rbStart <= (BWPSize - ra->msg3_nb_rb) && vrb_map_UL[BWPStart + rbStart])
+        rbStart++;
+      if (rbStart > (BWPSize - ra->msg3_nb_rb)) {
+        // cannot find free vrb_map for msg3 retransmission in this slot
+        return;
       }
-    }
-    if (rbStart > (BWPSize - ra->msg3_nb_rb)) {
-      // cannot find free vrb_map for msg3 retransmission in this slot
-      return;
+      while (rbStart + rbSize < BWPSize
+             && !vrb_map_UL[BWPStart + rbStart + rbSize]
+             && rbSize < ra->msg3_nb_rb)
+        rbSize++;
     }
 
     LOG_I(NR_MAC, "[gNB %d][RAPROC] Frame %d, Slot %d : CC_id %d Scheduling retransmission of Msg3 in (%d,%d)\n",
@@ -900,7 +907,7 @@ void nr_generate_Msg3_retransmission(module_id_t module_idP, int CC_id, frame_t 
                        aggregation_level);
 
     for (int rb = 0; rb < ra->msg3_nb_rb; rb++) {
-      vrb_map_UL[rbStart + BWPStart + rb] = 1;
+      vrb_map_UL[rbStart + BWPStart + rb] = 0xff; // all symbols
     }
 
     // reset state to wait msg3
@@ -984,8 +991,8 @@ void nr_get_Msg3alloc(module_id_t module_id,
   LOG_D(NR_MAC, "[RAPROC] Msg3 slot %d: current slot %u Msg3 frame %u k2 %u Msg3_tda_id %u\n", ra->Msg3_slot, current_slot, ra->Msg3_frame, k2,ra->Msg3_tda_id);
   uint16_t *vrb_map_UL = RC.nrmac[module_id]->common_channels[CC_id].vrb_map_UL[ra->Msg3_frame%MAX_NUM_UL_SCHED_FRAME][ra->Msg3_slot];
 
-  int bwpSize = NRRIV2BW(scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
-  int bwpStart = NRRIV2PRBOFFSET(scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
+  int BWPSize = NRRIV2BW(scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
+  int BWPStart = NRRIV2PRBOFFSET(scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
 
   if (ra->CellGroup) {
     AssertFatal(ra->CellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.count == 1,
@@ -993,8 +1000,8 @@ void nr_get_Msg3alloc(module_id_t module_id,
     NR_BWP_Uplink_t *ubwp = ra->CellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList->list.array[ra->bwp_id - 1];
     int act_bwp_start = NRRIV2PRBOFFSET(ubwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
     int act_bwp_size  = NRRIV2BW(ubwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
-    if (!((bwpStart >= act_bwp_start) && ((bwpStart+bwpSize) <= (act_bwp_start+act_bwp_size))))
-      bwpStart = act_bwp_start;
+    if (!((BWPStart >= act_bwp_start) && ((BWPStart+BWPSize) <= (act_bwp_start+act_bwp_size))))
+      BWPStart = act_bwp_start;
   }
 
   /* search msg3_nb_rb free RBs */
@@ -1003,17 +1010,17 @@ void nr_get_Msg3alloc(module_id_t module_id,
   while (rbSize < msg3_nb_rb) {
     rbStart += rbSize; /* last iteration rbSize was not enough, skip it */
     rbSize = 0;
-    while (rbStart < bwpSize && vrb_map_UL[rbStart + bwpStart])
+    while (rbStart < BWPSize && vrb_map_UL[rbStart + BWPStart])
       rbStart++;
-    AssertFatal(rbStart < bwpSize - msg3_nb_rb, "no space to allocate Msg 3 for RA!\n");
-    while (rbStart + rbSize < bwpSize
-           && !vrb_map_UL[rbStart + bwpStart + rbSize]
+    AssertFatal(rbStart < BWPSize - msg3_nb_rb, "no space to allocate Msg 3 for RA!\n");
+    while (rbStart + rbSize < BWPSize
+           && !vrb_map_UL[rbStart + BWPStart + rbSize]
            && rbSize < msg3_nb_rb)
       rbSize++;
   }
   ra->msg3_nb_rb = msg3_nb_rb;
   ra->msg3_first_rb = rbStart;
-  ra->msg3_bwp_start = bwpStart;
+  ra->msg3_bwp_start = BWPStart;
 }
 
 
@@ -1113,7 +1120,7 @@ void nr_add_msg3(module_id_t module_idP, int CC_id, frame_t frameP, sub_frame_t 
                 i + ra->msg3_first_rb,
                 ra->Msg3_frame,
                 ra->Msg3_slot);
-    vrb_map_UL[i + ra->msg3_first_rb + ra->msg3_bwp_start] = 1;
+    vrb_map_UL[i + ra->msg3_first_rb + ra->msg3_bwp_start] = 0xff; // all symbols
   }
 
   LOG_D(NR_MAC, "[gNB %d][RAPROC] Frame %d, Slot %d : CC_id %d RA is active, Msg3 in (%d,%d)\n", module_idP, frameP, slotP, CC_id, ra->Msg3_frame, ra->Msg3_slot);
