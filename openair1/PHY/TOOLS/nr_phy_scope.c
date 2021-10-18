@@ -316,7 +316,7 @@ static void timeSignal (OAIgraph_t *graph, PHY_VARS_gNB *phy_vars_gnb, RU_t *phy
 */
 
 static void timeResponse (OAIgraph_t *graph, scopeData_t *p, int nb_UEs) {
-  const int len=2*p->gNB->frame_parms.ofdm_symbol_size;
+  const int len=p->gNB->frame_parms.ofdm_symbol_size;
   float *values, *time;
   oai_xygraph_getbuff(graph, &time, &values, len, 0);
   const int ant=0; // display antenna 0 for each UE
@@ -578,7 +578,7 @@ static void ueChannelResponse  (OAIgraph_t *graph, PHY_VARS_NR_UE *phy_vars_ue, 
   // Channel Impulse Response
   genericPowerPerAntena(graph, phy_vars_ue->frame_parms.nb_antennas_rx,
                         (const scopeSample_t **) phy_vars_ue->pbch_vars[eNB_id]->dl_ch_estimates_time,
-                        phy_vars_ue->frame_parms.ofdm_symbol_size>>3);
+                        phy_vars_ue->frame_parms.ofdm_symbol_size);
 }
 static void ueFreqWaterFall (OAIgraph_t *graph,PHY_VARS_NR_UE *phy_vars_ue, int eNB_id, int UE_id ) {
   NR_DL_FRAME_PARMS *frame_parms=&phy_vars_ue->frame_parms;
@@ -586,7 +586,7 @@ static void ueFreqWaterFall (OAIgraph_t *graph,PHY_VARS_NR_UE *phy_vars_ue, int 
   genericWaterFall(graph,
                    (scopeSample_t *)phy_vars_ue->common_vars.common_vars_rx_data_per_thread[0].rxdataF[0],
                    frame_parms->samples_per_slot_wCP,
-                   phy_vars_ue->frame_parms.slots_per_frame,
+                   14,
                    "X axis: one frame frequency" );
 }
 /*
