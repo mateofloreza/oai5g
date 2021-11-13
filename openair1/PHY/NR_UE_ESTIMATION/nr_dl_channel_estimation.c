@@ -33,6 +33,7 @@
 //#define DEBUG_PDSCH
 //#define DEBUG_PDCCH
 
+#define NO_INTERP 1
 
 int nr_pbch_dmrs_correlation(PHY_VARS_NR_UE *ue,
                              UE_nr_rxtx_proc_t *proc,
@@ -693,7 +694,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
   k = bwp_start_subcarrier;
   int re_offset = k;
 
-#ifdef DEBUG_CH
+#ifdef DEBUG_PDSCH
   printf("PDSCH Channel Estimation : ThreadId %d, gNB_id %d ch_offset %d, symbol_offset %d OFDM size %d, Ncp=%d, Ns=%d, k=%d symbol %d\n",proc->thread_id, gNB_id,ch_offset,symbol_offset,ue->frame_parms.ofdm_symbol_size,
          ue->frame_parms.Ncp,Ns,k, symbol);
 #endif
@@ -1247,6 +1248,10 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
       ch[0] = ch_0 / 6;
       ch[1] = ch_1 / 6;
 
+#if NO_INTERP
+      for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+      dl_ch+=24;
+#else
       multadd_real_vector_complex_scalar(filt8_avlip0,
                                          ch,
                                          dl_ch,
@@ -1264,6 +1269,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                          dl_ch,
                                          8);
       dl_ch -= 24;
+#endif
 
       for (pilot_cnt=6; pilot_cnt<6*(nb_rb_pdsch-1); pilot_cnt += 6) {
 
@@ -1311,6 +1317,11 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
 
         ch[0] = ch_0 / 6;
         ch[1] = ch_1 / 6;
+
+#if NO_INTERP
+        for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+        dl_ch+=24;
+#else
         dl_ch[6] += (ch[0] * 1365)>>15; // 1/12*16384
         dl_ch[7] += (ch[1] * 1365)>>15; // 1/12*16384
 
@@ -1332,6 +1343,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                            dl_ch,
                                            8);
         dl_ch -= 16;
+#endif
       }
       ch_0 = ((int32_t)pil[0]*rxF[0] - (int32_t)pil[1]*rxF[1])>>15;
       ch_1 = ((int32_t)pil[0]*rxF[1] + (int32_t)pil[1]*rxF[0])>>15;
@@ -1378,6 +1390,10 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
       ch[0] = ch_0 / 6;
       ch[1] = ch_1 / 6;
 
+#if NO_INTERP
+      for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+      dl_ch+=24;
+#else
       dl_ch[6] += (ch[0] * 1365)>>15; // 1/12*16384
       dl_ch[7] += (ch[1] * 1365)>>15; // 1/12*16384
 
@@ -1392,6 +1408,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                          ch,
                                          dl_ch,
                                          8);
+#endif
     }
     else  { // this is case without frequency-domain linear interpolation, just take average of LS channel estimates of 4 DMRS REs and use a common value for the whole PRB
       int32_t ch_0, ch_1;
@@ -1427,6 +1444,10 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
       ch[0] = ch_0 / 4;
       ch[1] = ch_1 / 4;
 
+#if NO_INTERP
+      for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+      dl_ch+=24;
+#else
       multadd_real_vector_complex_scalar(filt8_avlip0,
                                          ch,
                                          dl_ch,
@@ -1444,6 +1465,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                          dl_ch,
                                          8);
       dl_ch -= 24;
+#endif
 
       for (pilot_cnt=4; pilot_cnt<4*(nb_rb_pdsch-1); pilot_cnt += 4) {
         int32_t ch_0, ch_1;
@@ -1479,6 +1501,10 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
         ch[0] = ch_0 / 4;
         ch[1] = ch_1 / 4;
 
+#if NO_INTERP
+        for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+        dl_ch+=24;
+#else
         dl_ch[6] += (ch[0] * 1365)>>15; // 1/12*16384
         dl_ch[7] += (ch[1] * 1365)>>15; // 1/12*16384
 
@@ -1500,6 +1526,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                            dl_ch,
                                            8);
         dl_ch -= 16;
+#endif
       }
 
       ch_0 = ((int32_t)pil[0]*rxF[0] - (int32_t)pil[1]*rxF[1])>>15;
@@ -1533,6 +1560,10 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
       ch[0] = ch_0 / 4;
       ch[1] = ch_1 / 4;
 
+#if NO_INTERP
+      for (int i=0;i<12;i++) ((int32_t*)dl_ch)[i] = *(int32_t*)ch;
+      dl_ch+=24;
+#else
       dl_ch[6] += (ch[0] * 1365)>>15; // 1/12*16384
       dl_ch[7] += (ch[1] * 1365)>>15; // 1/12*16384
 
@@ -1547,6 +1578,7 @@ int nr_pdsch_channel_estimation(PHY_VARS_NR_UE *ue,
                                          ch,
                                          dl_ch,
                                          8);
+#endif
     }
 #ifdef DEBUG_PDSCH
     dl_ch = (int16_t *)&dl_ch_estimates[p*ue->frame_parms.nb_antennas_rx+aarx][ch_offset];
