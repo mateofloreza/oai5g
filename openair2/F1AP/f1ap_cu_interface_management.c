@@ -393,11 +393,11 @@ int CU_send_F1_SETUP_RESPONSE(instance_t instance,
       }
       cells_to_be_activated_list_itemExtIEs->extensionValue.choice.GNB_CUSystemInformation = *gNB_CUSystemInformation;
 
-      F1AP_ProtocolExtensionContainer_154P112_t p_154P112_t;
-      memset((void *)&p_154P112_t, 0, sizeof(F1AP_ProtocolExtensionContainer_154P112_t));
+      F1AP_ProtocolExtensionContainer_810P112_t p_810P112_t;
+      memset((void *)&p_810P112_t, 0, sizeof(F1AP_ProtocolExtensionContainer_810P112_t));
 
-      ASN_SEQUENCE_ADD(&p_154P112_t.list, cells_to_be_activated_list_itemExtIEs);
-      cells_to_be_activated_list_item.iE_Extensions = (struct F1AP_ProtocolExtensionContainer*)&p_154P112_t;
+      ASN_SEQUENCE_ADD(&p_810P112_t.list, cells_to_be_activated_list_itemExtIEs);
+      cells_to_be_activated_list_item.iE_Extensions = (struct F1AP_ProtocolExtensionContainer*)&p_810P112_t;
 
       free(gNB_CUSystemInformation);
       gNB_CUSystemInformation = NULL;
@@ -645,12 +645,12 @@ int CU_send_gNB_CU_CONFIGURATION_UPDATE(instance_t instance, f1ap_gnb_cu_configu
           cells_to_be_activated_list_itemExtIEs->extensionValue.choice.GNB_CUSystemInformation = *gNB_CUSystemInformation;
 
 
-          F1AP_ProtocolExtensionContainer_154P112_t p_154P112_t;
-          memset((void *)&p_154P112_t, 0, sizeof(F1AP_ProtocolExtensionContainer_154P112_t));
+          F1AP_ProtocolExtensionContainer_810P112_t p_810P112_t;
+          memset((void *)&p_810P112_t, 0, sizeof(F1AP_ProtocolExtensionContainer_810P112_t));
 
-          ASN_SEQUENCE_ADD(&p_154P112_t.list,
+          ASN_SEQUENCE_ADD(&p_810P112_t.list,
                            cells_to_be_activated_list_itemExtIEs);
-          cells_to_be_activated_list_item.iE_Extensions = (struct F1AP_ProtocolExtensionContainer*)&p_154P112_t;
+          cells_to_be_activated_list_item.iE_Extensions = (struct F1AP_ProtocolExtensionContainer*)&p_810P112_t;
 
           free(gNB_CUSystemInformation);
           gNB_CUSystemInformation = NULL;

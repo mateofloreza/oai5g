@@ -27,4 +27,4 @@ add_library(F1AP
             f1ap_messaging.c
 )
 target_link_libraries(F1AP PUBLIC ASN1_F1AP_LIB)
-target_include_directories(F1AP PRIVATE ASN1_F1AP_LIB)
+target_include_directories(F1AP PUBLIC "${CMAKE_CURRENT_DIR}")

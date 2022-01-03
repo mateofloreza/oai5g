@@ -949,7 +949,6 @@ include_directories("${OPENAIR3_DIR}/SCTP")
 include_directories("${OPENAIR3_DIR}/S1AP")
 include_directories("${OPENAIR2_DIR}/X2AP")
 include_directories("${OPENAIR2_DIR}/M2AP")
-include_directories("${OPENAIR2_DIR}/F1AP")
 include_directories("${OPENAIR3_DIR}/UDP")
 include_directories("${OPENAIR3_DIR}/GTPV1-U")
 include_directories("${OPENAIR3_DIR}/M3AP")
@@ -2006,6 +2005,7 @@ add_library(L2_NR
   ${GNB_APP_SRC}
   )
 target_compile_definitions(L2_NR PUBLIC NEW_GTPU)
+target_link_libraries(L2_NR PRIVATE F1AP)
 
 add_library(L2_LTE_NR
   ${L2_RRC_SRC}

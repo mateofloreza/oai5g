@@ -1,9 +1,14 @@
+set(F1AP_RELEASE "16.3.1")
+make_version(F1AP_VERSION 16 3 1)
+
 if(F1AP_RELEASE VERSION_EQUAL "15.1.1")
   include(R15.1.1/f1ap-15.1.1.cmake)
 elseif(F1AP_RELEASE VERSION_EQUAL "15.2.1")
   include(R15.2.1/f1ap-15.2.1.cmake)
 elseif(F1AP_RELEASE VERSION_EQUAL "16.3.1")
   include(R16.3.1/f1ap-16.3.1.cmake)
+else()
+  message(FATAL_ERROR "No definitions for F1AP_RELEASE ${F1AP_RELEASE}")
 endif()
 
 add_custom_command(OUTPUT ${f1ap_source} ${f1ap_headers}

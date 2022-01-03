@@ -34,12 +34,13 @@
 #ifndef F1AP_DU_RRC_MESSAGE_TRANSFER_H_
 #define F1AP_DU_RRC_MESSAGE_TRANSFER_H_
 
-#include "f1ap_common.h"
+#include "f1ap_messages_types.h"
 
+struct F1AP_F1AP_PDU;
 int DU_handle_DL_RRC_MESSAGE_TRANSFER(instance_t       instance,
                                       uint32_t         assoc_id,
                                       uint32_t         stream,
-                                      F1AP_F1AP_PDU_t *pdu);
+                                      struct F1AP_F1AP_PDU *pdu);
 
 int DU_send_UL_RRC_MESSAGE_TRANSFER(instance_t instance, const f1ap_ul_rrc_message_t *msg);
 int DU_send_UL_NR_RRC_MESSAGE_TRANSFER(instance_t instance, const f1ap_ul_rrc_message_t *msg);
