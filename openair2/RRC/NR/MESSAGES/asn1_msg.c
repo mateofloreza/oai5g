@@ -1466,12 +1466,22 @@ void update_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig,
   set_dl_mcs_table(scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.subcarrierSpacing,
                    configuration->force_256qam_off ? NULL : uecap, bwp_Dedicated, scc);
 
+  NR_BWP_UplinkDedicated_t *ul_bwp_Dedicated = SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP;
+  set_ul_mcs_table(uecap, scc, ul_bwp_Dedicated);
+
   struct NR_ServingCellConfig__downlinkBWP_ToAddModList *DL_BWP_list = SpCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList;
   if (DL_BWP_list) {
     for (int i=0; i<DL_BWP_list->list.count; i++){
       NR_BWP_Downlink_t *bwp = DL_BWP_list->list.array[i];
       int scs = bwp->bwp_Common->genericParameters.subcarrierSpacing;
       set_dl_mcs_table(scs, configuration->force_256qam_off ? NULL : uecap, bwp->bwp_Dedicated, scc);
+    }
+  }
+  struct NR_UplinkConfig__uplinkBWP_ToAddModList *UL_BWP_list = SpCellConfig->spCellConfigDedicated->uplinkConfig->uplinkBWP_ToAddModList;
+  if (UL_BWP_list) {
+    for (int i=0; i<UL_BWP_list->list.count; i++){
+      NR_BWP_Uplink_t *ul_bwp = UL_BWP_list->list.array[i];
+      set_ul_mcs_table(uecap, scc, ul_bwp->bwp_Dedicated);
     }
   }
 }

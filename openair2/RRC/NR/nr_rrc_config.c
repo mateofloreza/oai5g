@@ -291,6 +291,48 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay){
 }
 
 
+void set_ul_mcs_table(NR_UE_NR_Capability_t *cap,
+                      NR_ServingCellConfigCommon_t *scc,
+                      NR_BWP_UplinkDedicated_t *bwp_Dedicated) {
+
+  NR_PUSCH_Config_t *pusch_Config = bwp_Dedicated->pusch_Config->choice.setup;
+  if (cap == NULL){
+    pusch_Config->mcs_Table = NULL;
+    return;
+  }
+
+  int band;
+  if (scc->uplinkConfigCommon->frequencyInfoUL->frequencyBandList)
+    band = *scc->uplinkConfigCommon->frequencyInfoUL->frequencyBandList->list.array[0];
+  else
+    band = *scc->downlinkConfigCommon->frequencyInfoDL->frequencyBandList.list.array[0];
+  bool supported = false;
+  for (int i=0;i<cap->rf_Parameters.supportedBandListNR.list.count;i++) {
+    NR_BandNR_t *bandNRinfo = cap->rf_Parameters.supportedBandListNR.list.array[i];
+    if(bandNRinfo->bandNR == band && bandNRinfo->pusch_256QAM) {
+      supported = true;
+      break;
+    }
+  }
+  if (supported) {
+    if(pusch_Config->transformPrecoder == NULL) {
+      if(pusch_Config->mcs_Table == NULL)
+        pusch_Config->mcs_Table = calloc(1, sizeof(*pusch_Config->mcs_Table));
+      *pusch_Config->mcs_Table = NR_PDSCH_Config__mcs_Table_qam256;
+    }
+    else {
+      if(pusch_Config->mcs_TableTransformPrecoder == NULL)
+        pusch_Config->mcs_TableTransformPrecoder = calloc(1, sizeof(*pusch_Config->mcs_TableTransformPrecoder));
+      *pusch_Config->mcs_TableTransformPrecoder = NR_PUSCH_Config__mcs_TableTransformPrecoder_qam256;
+    }
+  }
+  else {
+    pusch_Config->mcs_Table = NULL;
+    pusch_Config->mcs_TableTransformPrecoder = NULL;
+  }
+}
+
+
 void set_dl_mcs_table(int scs, NR_UE_NR_Capability_t *cap,
                       NR_BWP_DownlinkDedicated_t *bwp_Dedicated,
                       NR_ServingCellConfigCommon_t *scc) {
