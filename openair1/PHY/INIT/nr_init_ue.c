@@ -448,7 +448,7 @@ int init_nr_ue_signal(PHY_VARS_NR_UE *ue, int nb_connected_gNB)
     pbch_vars[gNB_id]->dl_ch_estimates_ext = (int32_t **)malloc16_clear( 4*fp->nb_antennas_rx*sizeof(int32_t *) );
     pbch_vars[gNB_id]->dl_ch_estimates_time = (int32_t **)malloc16_clear( 4*fp->nb_antennas_rx*sizeof(int32_t *) );
     pbch_vars[gNB_id]->llr                 = (int16_t *)malloc16_clear( 1920 ); //
-    prach_vars[gNB_id]->prachF             = (int16_t *)malloc16_clear( sizeof(int)*(7*2*sizeof(int)*(fp->ofdm_symbol_size*12)) );
+    prach_vars[gNB_id]->prachF             = (int16_t *)malloc16_clear( fp->samples_per_subframe*4/5*2*sizeof(int16_t) );
     prach_vars[gNB_id]->prach              = (int16_t *)malloc16_clear( sizeof(int)*(7*2*sizeof(int)*(fp->ofdm_symbol_size*12)) );
 
     for (i=0; i<fp->nb_antennas_rx; i++) {

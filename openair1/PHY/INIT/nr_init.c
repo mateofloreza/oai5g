@@ -243,7 +243,7 @@ int phy_init_nr_gNB(PHY_VARS_gNB *gNB,
   common_vars->debugBuff_sample_offset = 0; 
 
   // PRACH
-  prach_vars->prachF = (int16_t *)malloc16_clear( 1024*2*sizeof(int16_t) );
+  prach_vars->prachF = (int16_t *)malloc16_clear(fp->samples_per_subframe*4/5*2*sizeof(int16_t));
   prach_vars->rxsigF = (int16_t **)malloc16_clear(Prx*sizeof(int16_t*));
   prach_vars->prach_ifft       = (int32_t *)malloc16_clear(1024*2*sizeof(int32_t));
 
