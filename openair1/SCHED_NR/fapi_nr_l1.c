@@ -246,11 +246,28 @@ void nr_schedule_response(NR_Sched_Rsp_t *Sched_INFO){
     if (number_ul_dci_pdu>0)
       oai_nfapi_ul_dci_req(UL_dci_req);
 
-    if (number_tx_data_pdu>0)
-      oai_nfapi_tx_data_req(TX_req);
-
     if (number_dl_pdu>0)
       oai_nfapi_dl_tti_req(DL_req);
+
+    if (number_tx_data_pdu>0)
+        oai_nfapi_tx_data_req(TX_req);
+
   }
+#if 0
+  if (NFAPI_MODE == NFAPI_MODE_AERIAL) {
+    if (number_dl_pdu > 0) {
+      oai_fapi_dl_tti_req(DL_req);
+    }
+    if (number_ul_tti_pdu > 0){
+      oai_fapi_ul_tti_req(UL_tti_req);
+    }
+    if (number_tx_data_pdu > 0){
+      oai_fapi_tx_data_req(TX_req);
+    }
+    if (number_ul_dci_pdu > 0){
+      oai_fapi_ul_dci_req(UL_dci_req);
+    }
+  }
+#endif
   stop_meas(&gNB->schedule_response_stats);
 }

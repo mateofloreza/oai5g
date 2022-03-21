@@ -1574,7 +1574,7 @@ int nr_param_resp_cb(nfapi_vnf_config_t *config, int p5_idx, nfapi_nr_param_resp
   phy_info *phy = pnf->phys;
   struct sockaddr_in pnf_p7_sockaddr;
   nfapi_nr_config_request_scf_t *req = &RC.nrmac[0]->config[0]; // check
-  phy->remote_port = 50610;//resp->nfapi_config.p7_pnf_port.value;
+  phy->remote_port = resp->nfapi_config.p7_pnf_port.value;
   //phy->remote_port = 32123;//resp->nfapi_config.p7_pnf_port.value;
   memcpy(&pnf_p7_sockaddr.sin_addr.s_addr, &(resp->nfapi_config.p7_pnf_address_ipv4.address[0]), 4);
   phy->remote_addr = inet_ntoa(pnf_p7_sockaddr.sin_addr);
@@ -1589,7 +1589,7 @@ int nr_param_resp_cb(nfapi_vnf_config_t *config, int p5_idx, nfapi_nr_param_resp
   req->nfapi_config.p7_vnf_port.tl.tag = NFAPI_NR_NFAPI_P7_VNF_PORT_TAG;
   req->nfapi_config.p7_vnf_port.value = p7_vnf->local_port;
   req->num_tlv++;
-  NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] DJP local_port:%d\n", p7_vnf->local_port);
+  NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] DJP local_port:%d\n", ntohs(p7_vnf->local_port));
   req->nfapi_config.p7_vnf_address_ipv4.tl.tag = NFAPI_NR_NFAPI_P7_VNF_ADDRESS_IPV4_TAG;
   struct sockaddr_in vnf_p7_sockaddr;
   vnf_p7_sockaddr.sin_addr.s_addr = inet_addr(p7_vnf->local_addr);
@@ -1637,7 +1637,7 @@ int param_resp_cb(nfapi_vnf_config_t *config, int p5_idx, nfapi_param_response_t
   phy_info *phy = pnf->phys;
   struct sockaddr_in pnf_p7_sockaddr;
   nfapi_config_request_t *req = &RC.mac[0]->config[0];
-  phy->remote_port = 32123;//resp->nfapi_config.p7_pnf_port.value;
+  phy->remote_port = resp->nfapi_config.p7_pnf_port.value;
   memcpy(&pnf_p7_sockaddr.sin_addr.s_addr, &(resp->nfapi_config.p7_pnf_address_ipv4.address[0]), 4);
   phy->remote_addr = inet_ntoa(pnf_p7_sockaddr.sin_addr);
   // for now just 1
@@ -1649,7 +1649,7 @@ int param_resp_cb(nfapi_vnf_config_t *config, int p5_idx, nfapi_param_response_t
   req->nfapi_config.p7_vnf_port.tl.tag = NFAPI_NFAPI_P7_VNF_PORT_TAG;
   req->nfapi_config.p7_vnf_port.value = p7_vnf->local_port;
   req->num_tlv++;
-  NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] DJP local_port:%d\n", p7_vnf->local_port);
+  NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] DJP local_port:%d\n", ntohs(p7_vnf->local_port));
   req->nfapi_config.p7_vnf_address_ipv4.tl.tag = NFAPI_NFAPI_P7_VNF_ADDRESS_IPV4_TAG;
   struct sockaddr_in vnf_p7_sockaddr;
   vnf_p7_sockaddr.sin_addr.s_addr = inet_addr(p7_vnf->local_addr);
@@ -1789,7 +1789,7 @@ void vnf_start_thread(void *ptr) {
 
 static vnf_info vnf;
 
-void configure_nr_nfapi_vnf(char *vnf_addr, int vnf_p5_port) {
+void configure_nr_nfapi_vnf(char *vnf_addr, int vnf_p5_port, char *pnf_ip_addr, int pnf_p7_port, int vnf_p7_port) {
   nfapi_setmode(NFAPI_MODE_VNF);
   memset(&vnf, 0, sizeof(vnf));
   memset(vnf.p7_vnfs, 0, sizeof(vnf.p7_vnfs));
@@ -1800,9 +1800,7 @@ void configure_nr_nfapi_vnf(char *vnf_addr, int vnf_p5_port) {
   vnf.p7_vnfs[0].config = nfapi_vnf_p7_config_create();
   NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] %s() vnf.p7_vnfs[0].config:%p VNF ADDRESS:%s:%d\n", __FUNCTION__, vnf.p7_vnfs[0].config, vnf_addr, vnf_p5_port);
   strcpy(vnf.p7_vnfs[0].local_addr, vnf_addr);
-  //vnf.p7_vnfs[0].local_port = vnf.p7_vnfs[0].local_port; // 50001; // TODO: remove hardcode
-  vnf.p7_vnfs[0].local_port = 50611;  
-  //vnf.p7_vnfs[0].local_port = 50011;
+  vnf.p7_vnfs[0].local_port = vnf_p7_port;
   vnf.p7_vnfs[0].mac = (mac_t *)malloc(sizeof(mac_t));
   nfapi_vnf_config_t *config = nfapi_vnf_config_create();
   config->malloc = malloc;
@@ -1840,7 +1838,7 @@ void configure_nr_nfapi_vnf(char *vnf_addr, int vnf_p5_port) {
 }
 
 
-void configure_nfapi_vnf(char *vnf_addr, int vnf_p5_port) {
+void configure_nfapi_vnf(char *vnf_addr, int vnf_p5_port, char *pnf_ip_addr, int pnf_p7_port, int vnf_p7_port) {
   nfapi_setmode(NFAPI_MODE_VNF);
   memset(&vnf, 0, sizeof(vnf));
   memset(vnf.p7_vnfs, 0, sizeof(vnf.p7_vnfs));
@@ -1851,8 +1849,7 @@ void configure_nfapi_vnf(char *vnf_addr, int vnf_p5_port) {
   vnf.p7_vnfs[0].config = nfapi_vnf_p7_config_create();
   NFAPI_TRACE(NFAPI_TRACE_INFO, "[VNF] %s() vnf.p7_vnfs[0].config:%p VNF ADDRESS:%s:%d\n", __FUNCTION__, vnf.p7_vnfs[0].config, vnf_addr, vnf_p5_port);
   strcpy(vnf.p7_vnfs[0].local_addr, vnf_addr);
-  //vnf.p7_vnfs[0].local_port = vnf.p7_vnfs[0].local_port; // 50001; // TODO: remove hardcode
-  vnf.p7_vnfs[0].local_port = 50011;
+  vnf.p7_vnfs[0].local_port = vnf_p7_port;
   vnf.p7_vnfs[0].mac = (mac_t *)malloc(sizeof(mac_t));
   nfapi_vnf_config_t *config = nfapi_vnf_config_create();
   config->malloc = malloc;

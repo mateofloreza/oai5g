@@ -328,6 +328,7 @@ typedef struct
 #define NFAPI_NR_CONFIG_SLOT_CONFIG_TAG 0x1027
 
 #define NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG 0x1028
+#define NFAPI_NR_CONFIG_TDD_TABLE 0x1035
 
 //table 3-21
 typedef struct 
@@ -927,6 +928,8 @@ typedef struct
 
 typedef struct
 {
+  uint16_t bwp_size;//Needed for SCF222 10.02
+  uint16_t bwp_start;//Needed for SCF222 10.02
   uint8_t subcarrier_spacing;       // subcarrierSpacing [3GPP TS 38.211, sec 4.2], Value:0->4
   uint8_t cyclic_prefix;            // Cyclic prefix type [3GPP TS 38.211, sec 4.2], 0: Normal; 1: Extended
   uint16_t start_rb;                // PRB where this CSI resource starts related to common resource block #0 (CRB#0). Only multiples of 4 are allowed. [3GPP TS 38.331, sec 6.3.2 parameter CSIFrequencyOccupation], Value: 0 ->274
@@ -1482,7 +1485,7 @@ typedef struct
   uint32_t handle;
   uint16_t rnti;
   uint8_t  harq_id;
-  uint16_t pdu_length;
+  uint32_t pdu_length;// For Aerial, RX_DATA.indication PDULength is changed to 32 bit field
   uint8_t  ul_cqi;
   uint16_t timing_advance;//Timing advance 𝑇𝐴 measured for the UE [TS 38.213, Section 4.2] NTA_new = NTA_old + (TA − 31) ⋅ 16 ⋅ 64⁄2μ Value: 0 → 63 0xffff should be set if this field is invalid
   uint16_t rssi;

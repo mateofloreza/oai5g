@@ -1968,11 +1968,11 @@ void fill_initial_cellGroupConfig(int uid,
   *physicalCellGroupConfig->p_NR_FR1                                        = 10;
   physicalCellGroupConfig->pdsch_HARQ_ACK_Codebook                          = NR_PhysicalCellGroupConfig__pdsch_HARQ_ACK_Codebook_dynamic;
   cellGroupConfig->physicalCellGroupConfig                                  = physicalCellGroupConfig;
-  
+
   cellGroupConfig->spCellConfig                                             = calloc(1,sizeof(*cellGroupConfig->spCellConfig));
 
   fill_initial_SpCellConfig(uid,cellGroupConfig,scc,servingcellconfigdedicated,configuration);
-  
+
   cellGroupConfig->sCellToAddModList                                        = NULL;
   cellGroupConfig->sCellToReleaseList                                       = NULL;
 }

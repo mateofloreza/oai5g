@@ -1125,7 +1125,7 @@ void nr_configure_pdcch(nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu,
     if(bwp == NULL)
       pdcch_pdu->CoreSetType = NFAPI_NR_CSET_CONFIG_MIB_SIB1;
     else
-      pdcch_pdu->CoreSetType = NFAPI_NR_CSET_CONFIG_PDCCH_CONFIG_CSET_0;
+      pdcch_pdu->CoreSetType = NFAPI_NR_CSET_CONFIG_MIB_SIB1;// NFAPI_NR_CSET_CONFIG_PDCCH_CONFIG_CSET_0;
   } else{
     pdcch_pdu->CoreSetType = NFAPI_NR_CSET_CONFIG_PDCCH_CONFIG;
   }
@@ -1408,6 +1408,18 @@ void nr_configure_pucch(const NR_SIB1_t *sib1,
     pucch_pdu->sr_flag = O_sr;
     pucch_pdu->prb_size=1;
   }
+  // Beamforming
+  pucch_pdu->beamforming.num_prgs = 1;
+  pucch_pdu->beamforming.prg_size = pucch_pdu->prb_size;
+  pucch_pdu->beamforming.dig_bf_interface = 1;
+  if (pucch_pdu->beamforming.prgs_list == NULL) {
+    pucch_pdu->beamforming.prgs_list = calloc(pucch_pdu->beamforming.num_prgs, sizeof(*pucch_pdu->beamforming.prgs_list));
+  }
+  if (pucch_pdu->beamforming.prgs_list[0].dig_bf_interface_list == NULL) {
+    pucch_pdu->beamforming.prgs_list[0].dig_bf_interface_list = calloc(pucch_pdu->beamforming.dig_bf_interface, sizeof(*pucch_pdu->beamforming.prgs_list[0].dig_bf_interface_list));
+  }
+  pucch_pdu->beamforming.prgs_list[0].dig_bf_interface_list[0].beam_idx = 0;
+
 }
 
 
@@ -1987,6 +1999,41 @@ void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
       // UL-SCH indicator
       pos += 1;
       *dci_pdu |= ((uint64_t)dci_pdu_rel15->ulsch_indicator & 0x1) << (dci_size - pos);
+
+      LOG_I(NR_MAC,"============= NR_UL_DCI_FORMAT_0_1 =============\n");
+      LOG_I(NR_MAC,"dci_size = %i\n", dci_size);
+      LOG_I(NR_MAC,"dci_pdu_rel15->format_indicator = %i\n", dci_pdu_rel15->format_indicator);
+      LOG_I(NR_MAC,"dci_pdu_rel15->carrier_indicator.val = %i nbits %d\n", dci_pdu_rel15->carrier_indicator.val, dci_pdu_rel15->carrier_indicator.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->ul_sul_indicator.val = %i nbits %d\n", dci_pdu_rel15->ul_sul_indicator.val, dci_pdu_rel15->ul_sul_indicator.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->bwp_indicator.val = %i nbits %d\n", dci_pdu_rel15->bwp_indicator.val, dci_pdu_rel15->bwp_indicator.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->frequency_domain_assignment.val = %i nbits %d\n", dci_pdu_rel15->frequency_domain_assignment.val, dci_pdu_rel15->frequency_domain_assignment.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->time_domain_assignment.val = %i nbits %d\n", dci_pdu_rel15->time_domain_assignment.val, dci_pdu_rel15->time_domain_assignment.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->frequency_hopping_flag.val = %i nbits %d\n", dci_pdu_rel15->frequency_hopping_flag.val, dci_pdu_rel15->frequency_hopping_flag.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->mcs = %i\n", dci_pdu_rel15->mcs);
+      LOG_I(NR_MAC,"dci_pdu_rel15->ndi = %i\n", dci_pdu_rel15->ndi);
+      LOG_I(NR_MAC,"dci_pdu_rel15->rv= %i\n", dci_pdu_rel15->rv);
+      LOG_I(NR_MAC,"dci_pdu_rel15->harq_pid = %i\n", dci_pdu_rel15->harq_pid);
+      LOG_I(NR_MAC,"dci_pdu_rel15->dai[0].val = %i nbits %d\n", dci_pdu_rel15->dai[0].val, dci_pdu_rel15->dai[0].nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->dai[1].val = %i nbits %d\n", dci_pdu_rel15->dai[1].val, dci_pdu_rel15->dai[1].nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->tpc = %i\n", dci_pdu_rel15->tpc);
+      LOG_I(NR_MAC,"dci_pdu_rel15->srs_resource_indicator.val = %i nbits %d\n", dci_pdu_rel15->srs_resource_indicator.val, dci_pdu_rel15->srs_resource_indicator.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->precoding_information.val = %i nbits %d\n", dci_pdu_rel15->precoding_information.val, dci_pdu_rel15->precoding_information.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->antenna_ports.val = %i nbits %d\n", dci_pdu_rel15->antenna_ports.val, dci_pdu_rel15->antenna_ports.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->srs_request.val = %i nbits %d\n", dci_pdu_rel15->srs_request.val, dci_pdu_rel15->srs_request.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->csi_request.val = %i nbits %d\n", dci_pdu_rel15->csi_request.val, dci_pdu_rel15->csi_request.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->cbgti.val = %i nbits %d\n", dci_pdu_rel15->cbgti.val, dci_pdu_rel15->cbgti.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->ptrs_dmrs_association.val = %i nbits %d\n", dci_pdu_rel15->ptrs_dmrs_association.val, dci_pdu_rel15->ptrs_dmrs_association.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->beta_offset_indicator.val = %i nbits %d\n", dci_pdu_rel15->beta_offset_indicator.val, dci_pdu_rel15->beta_offset_indicator.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->dmrs_sequence_initialization.val = %i nbits %d\n", dci_pdu_rel15->dmrs_sequence_initialization.val, dci_pdu_rel15->dmrs_sequence_initialization.nbits);
+      LOG_I(NR_MAC,"dci_pdu_rel15->ulsch_indicator = %i\n", dci_pdu_rel15->ulsch_indicator);
+
+      LOG_I(NR_MAC,"frequency-domain assignment %d (%d bits) N_RB_BWP %d=> %d (0x%lx)\n",
+            dci_pdu_rel15->frequency_domain_assignment.val,
+            dci_pdu_rel15->frequency_domain_assignment.nbits,
+            N_RB,
+            dci_size-pos,
+            *dci_pdu);
+
       break;
     }
     break;
@@ -2074,7 +2121,9 @@ void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
     pos += 1;
     *dci_pdu |= ((uint64_t)dci_pdu_rel15->dmrs_sequence_initialization.val & 0x1) << (dci_size - pos);
   }
-  LOG_D(NR_MAC, "DCI has %d bits and the payload is %lx\n", dci_size, *dci_pdu);
+  if(dci_format == NR_UL_DCI_FORMAT_0_0 || dci_format == NR_UL_DCI_FORMAT_0_1){
+    LOG_D(NR_MAC, "DCI has %d bits and the payload is %lx\n", dci_size, *dci_pdu);
+  }
 }
 
 int get_spf(nfapi_nr_config_request_scf_t *cfg) {
@@ -2742,6 +2791,9 @@ void nr_csirs_scheduling(int Mod_idP,
           // According to last paragraph of TS 38.214 5.2.2.3.1
           uint16_t BWPSize = NRRIV2BW(genericParameters->locationAndBandwidth, MAX_BWP_SIZE);
           uint16_t BWPStart = NRRIV2PRBOFFSET(genericParameters->locationAndBandwidth, MAX_BWP_SIZE);
+          csirs_pdu_rel15->bwp_size  = BWPSize;
+          csirs_pdu_rel15->bwp_start = BWPStart;
+
           if (resourceMapping.freqBand.startingRB < BWPStart) {
             csirs_pdu_rel15->start_rb = BWPStart;
           } else {

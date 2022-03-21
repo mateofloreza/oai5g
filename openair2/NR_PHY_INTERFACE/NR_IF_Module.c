@@ -423,10 +423,10 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
   nfapi_nr_uci_indication_t *uci_ind = NULL;
   nfapi_nr_rx_data_indication_t *rx_ind = NULL;
   nfapi_nr_crc_indication_t *crc_ind = NULL;
-  if (get_softmodem_params()->emulate_l1)
+  if (get_softmodem_params()->emulate_l1 || NFAPI_MODE == NFAPI_MODE_AERIAL)
   {
     if (gnb_rach_ind_queue.num_items > 0) {
-      LOG_D(NR_MAC, "gnb_rach_ind_queue size = %zu\n", gnb_rach_ind_queue.num_items);
+      LOG_I(NR_MAC, "gnb_rach_ind_queue size = %zu\n", gnb_rach_ind_queue.num_items);
       rach_ind = get_queue(&gnb_rach_ind_queue);
       AssertFatal(rach_ind->number_of_pdus > 0, "Invalid number of PDUs\n");
       UL_info->rach_ind = *rach_ind;
@@ -468,7 +468,7 @@ void NR_UL_indication(NR_UL_IND_t *UL_info) {
   handle_nr_ulsch(UL_info);
   handle_nr_srs(UL_info);
 
-  if (get_softmodem_params()->emulate_l1) {
+  if (get_softmodem_params()->emulate_l1 || NFAPI_MODE == NFAPI_MODE_AERIAL) {
     free_unqueued_nfapi_indications(rach_ind, uci_ind, rx_ind, crc_ind);
   }
   if (NFAPI_MODE != NFAPI_MODE_PNF) {

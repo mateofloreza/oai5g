@@ -405,7 +405,7 @@ void nr_fill_nfapi_dl_sib1_pdu(int Mod_idP,
   nfapi_nr_dl_tti_request_pdu_t *dl_tti_pdcch_pdu = &dl_req->dl_tti_pdu_list[dl_req->nPDUs];
   memset((void*)dl_tti_pdcch_pdu,0,sizeof(nfapi_nr_dl_tti_request_pdu_t));
   dl_tti_pdcch_pdu->PDUType = NFAPI_NR_DL_TTI_PDCCH_PDU_TYPE;
-  dl_tti_pdcch_pdu->PDUSize = (uint8_t)(2+sizeof(nfapi_nr_dl_tti_pdcch_pdu));
+  dl_tti_pdcch_pdu->PDUSize = (uint16_t)(4+sizeof(nfapi_nr_dl_tti_pdcch_pdu));
   dl_req->nPDUs += 1;
   nfapi_nr_dl_tti_pdcch_pdu_rel15_t *pdcch_pdu_rel15 = &dl_tti_pdcch_pdu->pdcch_pdu.pdcch_pdu_rel15;
   nr_configure_pdcch(pdcch_pdu_rel15,
@@ -416,9 +416,15 @@ void nr_fill_nfapi_dl_sib1_pdu(int Mod_idP,
   nfapi_nr_dl_tti_request_pdu_t *dl_tti_pdsch_pdu = &dl_req->dl_tti_pdu_list[dl_req->nPDUs];
   memset((void*)dl_tti_pdsch_pdu,0,sizeof(nfapi_nr_dl_tti_request_pdu_t));
   dl_tti_pdsch_pdu->PDUType = NFAPI_NR_DL_TTI_PDSCH_PDU_TYPE;
-  dl_tti_pdsch_pdu->PDUSize = (uint8_t)(2+sizeof(nfapi_nr_dl_tti_pdsch_pdu));
+  dl_tti_pdsch_pdu->PDUSize = (uint16_t)(4+sizeof(nfapi_nr_dl_tti_pdsch_pdu));
   dl_req->nPDUs += 1;
   nfapi_nr_dl_tti_pdsch_pdu_rel15_t *pdsch_pdu_rel15 = &dl_tti_pdsch_pdu->pdsch_pdu.pdsch_pdu_rel15;
+
+  pdsch_pdu_rel15->precodingAndBeamforming.num_prgs=1;
+  pdsch_pdu_rel15->precodingAndBeamforming.prg_size=275;
+  pdsch_pdu_rel15->precodingAndBeamforming.dig_bf_interfaces=1;
+  pdsch_pdu_rel15->precodingAndBeamforming.prgs_list[0].pm_idx = 0;
+  pdsch_pdu_rel15->precodingAndBeamforming.prgs_list[0].dig_bf_interface_list[0].beam_idx = 0;
 
   pdcch_pdu_rel15->CoreSetType = NFAPI_NR_CSET_CONFIG_MIB_SIB1;
 
@@ -461,6 +467,9 @@ void nr_fill_nfapi_dl_sib1_pdu(int Mod_idP,
   LOG_D(NR_MAC,"sib1:bwpStart %d, bwpSize %d\n",pdsch_pdu_rel15->BWPStart,pdsch_pdu_rel15->BWPSize);
   LOG_D(NR_MAC,"sib1:rbStart %d, rbSize %d\n",pdsch_pdu_rel15->rbStart,pdsch_pdu_rel15->rbSize);
   LOG_D(NR_MAC,"sib1:dlDmrsSymbPos = 0x%x\n", pdsch_pdu_rel15->dlDmrsSymbPos);
+  LOG_D(NR_MAC,"sib1:refPoint = 0x%x\n", pdsch_pdu_rel15->refPoint);
+  LOG_D(NR_MAC,"sib1:NrOfSymbols = 0x%x\n", NrOfSymbols);
+  LOG_D(NR_MAC,"sib1:StartSymbolIndex = 0x%x\n", StartSymbolIndex);
 
   pdsch_pdu_rel15->maintenance_parms_v3.tbSizeLbrmBytes = nr_compute_tbslbrm(0,
                                                                              pdsch_pdu_rel15->BWPSize,
@@ -610,12 +619,13 @@ void schedule_nr_sib1(module_id_t module_idP, frame_t frameP, sub_frame_t slotP)
 
       // Data to be transmitted
       bzero(tx_req->TLVs[0].value.direct,MAX_NUM_NR_DLSCH_SEGMENTS_PER_LAYER*1056);
-      memcpy(tx_req->TLVs[0].value.direct, sib1_payload, sib1_sdu_length);
 
-      tx_req->PDU_length = TBS;
+      tx_req->PDU_length = TBS+4;
       tx_req->PDU_index  = pdu_index;
       tx_req->num_TLV = 1;
-      tx_req->TLVs[0].length = TBS + 2;
+      tx_req->TLVs[0].tag = 0;
+      tx_req->TLVs[0].length = TBS;
+      memcpy(tx_req->TLVs[0].value.direct, sib1_payload, sib1_sdu_length);
       gNB_mac->TX_req[CC_id].Number_of_PDUs++;
       gNB_mac->TX_req[CC_id].SFN = frameP;
       gNB_mac->TX_req[CC_id].Slot = slotP;

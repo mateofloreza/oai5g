@@ -268,7 +268,7 @@ int nr_process_mac_pdu( instance_t module_idP,
               uint8_t *next_subpduP = pduP + mac_subheader_len + mac_len;
               if ((pduP[mac_subheader_len+mac_len] & 0x3F) == UL_SCH_LCID_C_RNTI) {
                 crnti = ((next_subpduP[1]&0xFF)<<8)|(next_subpduP[2]&0xFF);
-		LOG_W(NR_MAC, " UL_SCH_LCID_SRB for rnti %04x\n", crnti);
+		            LOG_W(NR_MAC, " UL_SCH_LCID_SRB for rnti %04x\n", crnti);
                 UE_idx = find_nr_UE(&RC.nrmac[module_idP]->UE_info, crnti);
                 break;
               }
@@ -1829,7 +1829,7 @@ void nr_schedule_ulsch(module_id_t module_id, frame_t frame, sub_frame_t slot)
       nfapi_nr_ul_dci_request_pdus_t *ul_dci_request_pdu = &ul_dci_req->ul_dci_pdu_list[ul_dci_req->numPdus];
       memset(ul_dci_request_pdu, 0, sizeof(nfapi_nr_ul_dci_request_pdus_t));
       ul_dci_request_pdu->PDUType = NFAPI_NR_DL_TTI_PDCCH_PDU_TYPE;
-      ul_dci_request_pdu->PDUSize = (uint8_t)(2+sizeof(nfapi_nr_dl_tti_pdcch_pdu));
+      ul_dci_request_pdu->PDUSize = (uint8_t)(4+sizeof(nfapi_nr_dl_tti_pdcch_pdu));
       pdcch_pdu = &ul_dci_request_pdu->pdcch_pdu.pdcch_pdu_rel15;
       ul_dci_req->numPdus += 1;
       nr_configure_pdcch(pdcch_pdu, coreset, genericParameters, &sched_ctrl->sched_pdcch);
