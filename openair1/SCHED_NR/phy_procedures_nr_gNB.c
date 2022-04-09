@@ -102,8 +102,7 @@ void nr_common_signal_procedures (PHY_VARS_gNB *gNB,int frame,int slot,nfapi_nr_
     T(T_GNB_PHY_MIB, T_INT(0) /* module ID */, T_INT(frame), T_INT(slot), T_BUFFER(bch, 3));
   }
 
-  nr_generate_pbch(&gNB->pbch,
-                   &ssb_pdu,
+  nr_generate_pbch(&ssb_pdu,
                    gNB->nr_pbch_interleaver,
                    &txdataF[0][txdataF_offset],
                    AMP,
