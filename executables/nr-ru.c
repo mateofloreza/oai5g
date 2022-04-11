@@ -755,11 +755,11 @@ void tx_rf(RU_t *ru,int frame,int slot, uint64_t timestamp) {
       // bit 11 enables the gpio programming
       // currently we switch beams every 10 slots (should = 1 TDD period in FR2) and we take the beam index of the first symbol of the first slot of this period
       int beam=0;
-      if ((slot%10 == 0) && (ru->common.beam_id[0][slot*fp->symbols_per_slot] < 8)) {
-        beam = ru->common.beam_id[0][slot*fp->symbols_per_slot] | 8;
+      if ((slot%10 == 0) && (ru->common.beam_id[0][slot*fp->symbols_per_slot] < 64)) {
+        beam = ru->common.beam_id[0][slot*fp->symbols_per_slot] | 64; // telling USRP that beam changed
         LOG_D(HW,"slot %d, beam %d\n",slot,beam);
       }
-      flags |= beam<<8;
+      flags |= beam<<8; // MSB 16 bits are used for beam
     }
     if (proc->first_tx == 1) proc->first_tx = 0;
 
