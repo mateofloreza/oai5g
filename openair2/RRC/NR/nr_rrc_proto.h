@@ -228,6 +228,7 @@ bool nr_rrc_pdcp_config_asn1_req(const protocol_ctxt_t *const  ctxt_pP,
                                  uint8_t                  *const kUPint,
                                  LTE_PMCH_InfoList_r9_t   *pmch_InfoList_r9,
                                  rb_id_t                  *const defaultDRB,
-                                 struct NR_CellGroupConfig__rlc_BearerToAddModList *rlc_bearer2add_list);
+                                 struct NR_CellGroupConfig__rlc_BearerToAddModList *rlc_bearer2add_list,
+                                 rnti_t reestablish_rnti);
 
 int rrc_gNB_generate_pcch_msg(uint32_t tmsi, uint8_t paging_drx, instance_t instance, uint8_t CC_id);
