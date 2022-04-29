@@ -806,6 +806,47 @@ include_directories ("${LPP_DIR}")
 #file(GLOB LPP_C_FILES ${LPP_DIR}/*.c)
 #add_library(LPP ${LPP_C_FILES} )
 
+# NRPPA
+###############
+
+set(NRPPA_DIR ${OPENAIR3_DIR}/NRPPA)
+set(NRPPA_ASN_DIR ${NRPPA_DIR}/MESSAGES)
+set(NRPPA_ASN_FILES
+  ${NRPPA_ASN_DIR}/38455.asn
+  )
+
+if (${RU} STREQUAL 0)
+  set(NRPPA_ASN_GENERATED_C_DIR ${asn1_generated_dir}/NRPPA)
+  message("calling ASN1C_PREFIX=NRPPA_ asn1c -gen-PER -no-gen-OER -fcompound-names -no-gen-example -findirect-choice -fno-include-deps -D ${NRPPA_ASN_GENERATED_C_DIR} ${NRPPA_ASN_FILES}")
+  execute_process(
+    COMMAND ${OPENAIR_CMAKE}/tools/make_asn1c_includes.sh "NRPPA_" "-findirect-choice -fno-include-deps" ${NRPPA_ASN_GENERATED_C_DIR} ${NRPPA_ASN_FILES}
+    RESULT_VARIABLE ret
+    )
+  
+  if (NOT ${ret} STREQUAL 0)
+    message(FATAL_ERROR "asn1c: error")
+  endif (NOT ${ret} STREQUAL 0)
+  
+  add_custom_target (
+    NRPPA_flag ALL
+    COMMAND ${OPENAIR_CMAKE}/tools/make_asn1c_includes.sh "NRPPA_" "-findirect-choice -fno-include-deps" ${NRPPA_ASN_GENERATED_C_DIR} ${NRPPA_ASN_FILES}
+    DEPENDS ${NRPPA_ASN_FILES}
+    )
+  file(GLOB NRPPA_ASN_GENERATED_C_FILES ${NRPPA_ASN_GENERATED_C_DIR}/*.c)
+  add_library(NRPPA_LIB
+    ${NRPPA_ASN_GENERATED_C_FILES}
+    )
+  add_dependencies (NRPPA_LIB  NRPPA_flag)
+  
+  include_directories ("${NRPPA_ASN_GENERATED_C_DIR}")
+  include_directories ("${NRPPA_DIR}")
+  
+  #file(GLOB NRPPA_C_FILES ${NRPPA_DIR}/*.c)
+  #add_library(NRPPA ${NRPPA_C_FILES} )
+  
+endif (${RU} STREQUAL 0)
+
+
 # Hardware dependant options
 ###################################
 add_list1_option(NB_ANTENNAS_RX "4" "Number of antennas in reception" "1" "2" "4")
