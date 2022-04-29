@@ -129,7 +129,7 @@ void prepare_sim_uecap(NR_UE_NR_Capability_t *cap,
                        NR_ServingCellConfigCommon_t *scc,
                        int numerology,
                        int rbsize,
-                       int mcs_table);
-
+                       int mcs_table_dl,
+                       int mcs_table_ul);
 
 #endif

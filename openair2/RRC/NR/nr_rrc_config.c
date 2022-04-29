@@ -174,17 +174,23 @@ void prepare_sim_uecap(NR_UE_NR_Capability_t *cap,
                        NR_ServingCellConfigCommon_t *scc,
                        int numerology,
                        int rbsize,
-                       int mcs_table) {
+                       int mcs_table_dl,
+                       int mcs_table_ul) {
 
   int band = *scc->downlinkConfigCommon->frequencyInfoDL->frequencyBandList.list.array[0];
   NR_BandNR_t *nr_bandnr = CALLOC(1,sizeof(NR_BandNR_t));
   nr_bandnr->bandNR = band;
   ASN_SEQUENCE_ADD(&cap->rf_Parameters.supportedBandListNR.list,
                    nr_bandnr);
-  if (mcs_table == 1) {
+  NR_BandNR_t *bandNRinfo = cap->rf_Parameters.supportedBandListNR.list.array[0];
+
+  if (mcs_table_ul == 1) {
+    bandNRinfo->pusch_256QAM = CALLOC(1,sizeof(*bandNRinfo->pusch_256QAM));
+    *bandNRinfo->pusch_256QAM = NR_BandNR__pusch_256QAM_supported;
+  }
+  if (mcs_table_dl == 1) {
     int bw = get_supported_band_index(numerology, band, rbsize);
     if (band>256) {
-      NR_BandNR_t *bandNRinfo = cap->rf_Parameters.supportedBandListNR.list.array[0];
       bandNRinfo->pdsch_256QAM_FR2 = CALLOC(1,sizeof(*bandNRinfo->pdsch_256QAM_FR2));
       *bandNRinfo->pdsch_256QAM_FR2 = NR_BandNR__pdsch_256QAM_FR2_supported;
     }
