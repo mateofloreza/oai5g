@@ -231,4 +231,7 @@ bool nr_rrc_pdcp_config_asn1_req(const protocol_ctxt_t *const  ctxt_pP,
                                  struct NR_CellGroupConfig__rlc_BearerToAddModList *rlc_bearer2add_list,
                                  rnti_t reestablish_rnti);
 
-int rrc_gNB_generate_pcch_msg(uint32_t tmsi, uint8_t paging_drx, instance_t instance, uint8_t CC_id);
+int rrc_gNB_generate_pcch_msg(uint32_t tmsi,
+                              uint8_t paging_drx,
+                              instance_t instance,
+                              uint8_t CC_id);
