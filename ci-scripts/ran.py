@@ -984,22 +984,17 @@ class RANManagement():
 			#keys below are the markers we are loooking for, loop over this keys list
 			#everytime these markers are found in the log file, the previous ones are overwritten in the dict
 			#eventually we record and print only the last occurence 
-			keys = {'UE ID','dlsch_rounds','dlsch_total_bytes','ulsch_rounds','ulsch_total_bytes_scheduled'}
+			keys = {'UE RNTI ','dlsch_rounds','dlsch_total_bytes','ulsch_rounds','ulsch_total_bytes_scheduled'}
 			for k in keys:
+				ue_prefix = "uenone"
 				result = re.search(k, line)
 				if result is not None:
-					ue_prefix = 'ue0'
-					ue_res = re.search('UE ID 1|UE 1:', line)
+					ue_res = re.search(r'UE RNTI [0-9a-f]{4} (\(\d+\))', line)
 					if ue_res is not None:
-						ue_prefix = 'ue1'
-					ue_res = re.search('UE ID 2|UE 2:', line)
-					if ue_res is not None:
-						ue_prefix = 'ue2'
-					ue_res = re.search('UE ID 3|UE 3:', line)
-					if ue_res is not None:
-						ue_prefix = 'ue3'
+						ue_prefix = 'ue' + str(ue_res.group(1))
 					#remove 1- all useless char before relevant info (ulsch or dlsch) 2- trailing char
 					dlsch_ulsch_stats[ue_prefix+k]=re.sub(r'^.*\]\s+', r'' , line.rstrip())
+					print("ue_prefix = " + ue_prefix + ", k = " + k, ", dlsch_ulsch_stats = " + dlsch_ulsch_stats[ue_prefix+k])
 
 			result = re.search('Received NR_RRCReconfigurationComplete from UE', str(line))
 			if result is not None:
