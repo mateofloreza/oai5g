@@ -815,7 +815,6 @@ set(NRPPA_ASN_FILES
   ${NRPPA_ASN_DIR}/38455.asn
   )
 
-if (${RU} STREQUAL 0)
   set(NRPPA_ASN_GENERATED_C_DIR ${asn1_generated_dir}/NRPPA)
   message("calling ASN1C_PREFIX=NRPPA_ asn1c -gen-PER -no-gen-OER -fcompound-names -no-gen-example -findirect-choice -fno-include-deps -D ${NRPPA_ASN_GENERATED_C_DIR} ${NRPPA_ASN_FILES}")
   execute_process(
@@ -844,8 +843,9 @@ if (${RU} STREQUAL 0)
   #file(GLOB NRPPA_C_FILES ${NRPPA_DIR}/*.c)
   #add_library(NRPPA ${NRPPA_C_FILES} )
   
-endif (${RU} STREQUAL 0)
+add_executable(main_nrppa ${OPENAIR3_DIR}/NRPPA/main_nrppa.c )
 
+target_link_libraries(main_nrppa NRPPA_LIB)
 
 # Hardware dependant options
 ###################################
