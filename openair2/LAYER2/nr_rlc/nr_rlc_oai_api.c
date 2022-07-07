@@ -746,7 +746,7 @@ static void add_rlc_srb(int rnti, struct NR_SRB_ToAddMod *s, NR_RLC_BearerConfig
   nr_rlc_manager_lock(nr_rlc_ue_manager);
   ue = nr_rlc_manager_get_ue(nr_rlc_ue_manager, rnti);
   if (ue->srb[srb_id-1] != NULL) {
-    LOG_W(RLC, "%s:%d:%s: SRB %d already exists for UE with RNTI 0x%04x, do nothing\n", __FILE__, __LINE__, __FUNCTION__, srb_id, rnti);
+    LOG_W(RLC, "%s:%d:%s: SRB %d already exists for UE with RNTI %04x, do nothing\n", __FILE__, __LINE__, __FUNCTION__, srb_id, rnti);
   } else {
     /* hack: hardcode values for NR */
     t_poll_retransmit = 45;
