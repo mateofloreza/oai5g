@@ -304,31 +304,33 @@ void apply_macrlc_config(gNB_RRC_INST *rrc,
                              get_softmodem_params()->sa ? cgc->rlc_BearerToAddModList : NULL);
 
 }
+
 void apply_macrlc_config_reest(gNB_RRC_INST *rrc,
-                         rrc_gNB_ue_context_t         *const ue_context_pP,
-                         const protocol_ctxt_t        *const ctxt_pP,
-                         int rnti) {
+                               rrc_gNB_ue_context_t *const ue_context_pP,
+                               const protocol_ctxt_t *const ctxt_pP,
+                               int rnti) {
 
-      rrc_mac_config_req_gNB(rrc->module_id,
-                             rrc->configuration.pdsch_AntennaPorts,
-                             rrc->configuration.pusch_AntennaPorts,
-                             rrc->configuration.sib1_tda,
-                             rrc->configuration.minRXTXTIME,
-                             NULL,
-                             NULL,
-                             NULL,
-                             0,
-                             rnti,
-                             get_softmodem_params()->sa ? ue_context_pP->ue_context.masterCellGroup : (NR_CellGroupConfig_t *)NULL);
+  rrc_mac_config_req_gNB(rrc->module_id,
+                         rrc->configuration.pdsch_AntennaPorts,
+                         rrc->configuration.pusch_AntennaPorts,
+                         rrc->configuration.sib1_tda,
+                         rrc->configuration.minRXTXTIME,
+                         NULL,
+                         NULL,
+                         NULL,
+                         0,
+                         rnti,
+                         get_softmodem_params()->sa ? ue_context_pP->ue_context.masterCellGroup : (NR_CellGroupConfig_t *)NULL);
 
-      nr_rrc_rlc_config_asn1_req(ctxt_pP,
-                                 ue_context_pP->ue_context.SRB_configList,
-                                 NULL,
-                                 NULL,
-                                 NULL,
-                                 get_softmodem_params()->sa ? ue_context_pP->ue_context.masterCellGroup->rlc_BearerToAddModList : NULL);
+  nr_rrc_rlc_config_asn1_req(ctxt_pP,
+                             ue_context_pP->ue_context.SRB_configList,
+                             NULL,
+                             NULL,
+                             NULL,
+                             get_softmodem_params()->sa ? ue_context_pP->ue_context.masterCellGroup->rlc_BearerToAddModList : NULL);
 
 }
+
 void apply_pdcp_config(rrc_gNB_ue_context_t         *const ue_context_pP,
                        const protocol_ctxt_t        *const ctxt_pP ) {
 
