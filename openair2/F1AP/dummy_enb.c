@@ -47,3 +47,10 @@ bool sdap_data_req(protocol_ctxt_t *ctxt_p,
                    const int pdusession_id) {
 abort();
 }
+
+int rrc_gNB_generate_pcch_msg(uint32_t tmsi,
+                              uint8_t paging_drx,
+                              instance_t instance,
+                              uint8_t CC_id) {
+  abort();
+}
