@@ -658,7 +658,7 @@ teid_t newGtpuCreateTunnel(instance_t instance,
   pthread_mutex_unlock(&globGtp.gtp_lock);
   char ip4[INET_ADDRSTRLEN];
   char ip6[INET6_ADDRSTRLEN];
-  LOG_I(GTPU, "[%ld] Created tunnel for RNTI %x, teid for DL: %x, teid for UL %x to remote IPv4: %s, IPv6 %s\n",
+  LOG_I(GTPU, "[%ld] Created tunnel for RNTI %04x, DL teid %x, UL teid %x, to remote IPv4 %s, IPv6 %s\n",
         instance,
         rnti,
         tmp->teid_incoming,
@@ -671,7 +671,7 @@ teid_t newGtpuCreateTunnel(instance_t instance,
 int gtpv1u_create_s1u_tunnel(instance_t instance,
                              const gtpv1u_enb_create_tunnel_req_t  *create_tunnel_req,
                              gtpv1u_enb_create_tunnel_resp_t *create_tunnel_resp) {
-  LOG_D(GTPU, "[%ld] Start create tunnels for RNTI %x, num_tunnels %d, sgw_S1u_teid %x\n",
+  LOG_D(GTPU, "[%ld] Start create tunnels for RNTI %04x, num_tunnels %d, sgw_S1u_teid %x\n",
         instance,
         create_tunnel_req->rnti,
         create_tunnel_req->num_tunnels,
@@ -773,13 +773,34 @@ int gtpv1u_create_ngu_tunnel(  const instance_t instance,
   return !GTPNOK;
 }
 
-int gtpv1u_update_ngu_tunnel(
-  const instance_t instanceP,
-  const gtpv1u_gnb_create_tunnel_req_t *const  create_tunnel_req_pP,
-  const rnti_t prior_rnti
-) {
-  AssertFatal( false, "to be developped\n");
-  return GTPNOK;
+int gtpv1u_update_ngu_tunnel(const instance_t instanceP,
+                             const gtpv1u_gnb_create_tunnel_req_t *const  create_tunnel_req_pP,
+                             const rnti_t prior_rnti) {
+
+  LOG_D(GTPU, "[%ld] Start update tunnels for RNTI %04x\n", instanceP, prior_rnti);
+
+  pthread_mutex_lock(&globGtp.gtp_lock);
+
+  auto inst=&globGtp.instances[compatInst(instanceP)];
+  auto it=inst->ue2te_mapping.find(prior_rnti);
+  if ( it == inst->ue2te_mapping.end() ) {
+    LOG_W(GTPU,"[%ld] Delete GTP tunnels for RNTI: %04x, but no tunnel exits\n", instanceP, prior_rnti);
+    pthread_mutex_unlock(&globGtp.gtp_lock);
+    return GTPNOK;
+  }
+
+  for (int i = 0; i < create_tunnel_req_pP->num_tunnels; i++) {
+    teid_t incoming_teid = inst->ue2te_mapping[prior_rnti].bearers[create_tunnel_req_pP->pdusession_id[i]].teid_incoming;
+    if(inst->te2ue_mapping[incoming_teid].rnti == prior_rnti) {
+      inst->te2ue_mapping[incoming_teid].rnti=create_tunnel_req_pP->rnti;
+    }
+  }
+
+  inst->ue2te_mapping[create_tunnel_req_pP->rnti]=it->second;
+  inst->ue2te_mapping.erase(it);
+
+  pthread_mutex_unlock(&globGtp.gtp_lock);
+  return !GTPNOK;
 }
 
 int gtpv1u_create_x2u_tunnel(

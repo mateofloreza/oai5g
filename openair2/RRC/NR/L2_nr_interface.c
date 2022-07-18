@@ -50,13 +50,6 @@
 extern RAN_CONTEXT_t RC;
 
 
-int
-nr_rrc_mac_remove_ue(module_id_t mod_idP,
-                  rnti_t rntiP){
-  // todo
-  return 0;
-}
-
 //------------------------------------------------------------------------------
 uint8_t
 nr_rrc_data_req(

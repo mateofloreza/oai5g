@@ -437,7 +437,7 @@ void handle_nr_ul_harq(const int CC_idP,
           ra->rnti == crc_pdu->rnti)
         return;
     }
-    LOG_E(NR_MAC, "%s(): unknown RNTI 0x%04x in PUSCH\n", __func__, crc_pdu->rnti);
+    LOG_E(NR_MAC, "%s(): unknown RNTI %04x in PUSCH\n", __func__, crc_pdu->rnti);
     return;
   }
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
@@ -445,7 +445,7 @@ void handle_nr_ul_harq(const int CC_idP,
   LOG_D(NR_MAC, "Comparing crc_pdu->harq_id vs feedback harq_pid = %d %d\n",crc_pdu->harq_id, harq_pid);
   while (crc_pdu->harq_id != harq_pid || harq_pid < 0) {
     LOG_W(NR_MAC,
-          "Unexpected ULSCH HARQ PID %d (have %d) for RNTI 0x%04x (ignore this warning for RA)\n",
+          "Unexpected ULSCH HARQ PID %d (have %d) for RNTI %04x (ignore this warning for RA)\n",
           crc_pdu->harq_id,
           harq_pid,
           crc_pdu->rnti);
@@ -645,7 +645,7 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
         }
 
 
-	NR_UE_info_t* UE = add_new_nr_ue(gNB_mac, ra->rnti, ra->CellGroup);
+	      NR_UE_info_t *UE = add_new_nr_ue(gNB_mac, ra->rnti, ra->CellGroup);
         if (!UE) {
           LOG_W(NR_MAC, "Random Access %i discarded at state %i (TC_RNTI %04x RNTI %04x): max number of users achieved!\n", i, ra->state,ra->rnti,current_rnti);
 
@@ -691,7 +691,14 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
           LOG_A(NR_MAC,"[RAPROC] RA-Msg3 received (sdu_lenP %d)\n",sdu_lenP);
           LOG_D(NR_MAC,"[RAPROC] Received Msg3:\n");
           for (int k = 0; k < sdu_lenP; k++) {
-            LOG_D(NR_MAC,"(%i): 0x%x\n",k,sduP[k]);
+            LOG_D(NR_MAC,"(%i): 0x%02x\n",k,sduP[k]);
+          }
+          if(sduP[0]==0x04){
+            LOG_W(NR_MAC, "Bad SDU received. Random Access %i failed at state %i (Bad Msg3)\n", i, ra->state);
+            nr_mac_remove_ra_rnti(gnb_mod_idP, ra->rnti);
+            nr_clear_ra_proc(gnb_mod_idP, CC_idP, frameP, ra);
+            mac_remove_nr_ue(gNB_mac, ra->rnti);
+            return;
           }
 
           // UE Contention Resolution Identity
@@ -1089,11 +1096,13 @@ void pf_ul(module_id_t module_id,
   /* Loop UE_list to calculate throughput and coeff */
   UE_iterator(UE_list, UE) {
 
-    if (UE->Msg4_ACKed != true)
+    NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
+
+    if ((UE->Msg4_ACKed != true) || (sched_ctrl->ul_failure==1 && get_softmodem_params()->phy_test==0)) {
       continue;
+    }
 
     LOG_D(NR_MAC,"pf_ul: preparing UL scheduling for UE %04x\n",UE->rnti);
-    NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
 
     NR_BWP_t *genericParameters = get_ul_bwp_genericParameters(sched_ctrl->active_ubwp,
                                                                scc,
@@ -1514,7 +1523,7 @@ bool nr_fr1_ulsch_preprocessor(module_id_t module_id, frame_t frame, sub_frame_t
         frame,
         slot,
         nr_mac->UE_info.list,
-        2,
+        4,
         len,
         rballoc_mask);
   return true;

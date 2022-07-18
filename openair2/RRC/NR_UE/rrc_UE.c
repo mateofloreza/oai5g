@@ -2035,19 +2035,19 @@ nr_rrc_ue_establish_srb2(
                            NR_UE_rrc_inst[ctxt_pP->module_id].kgnb, &kRRCint);
 
      // Refresh SRBs
-      nr_rrc_pdcp_config_asn1_req(ctxt_pP,
-                                  radioBearerConfig->srb_ToAddModList,
-                                  NULL,
-                                  NULL,
-                                  NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm |
-                                  (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
-                                  kRRCenc,
-                                  kRRCint,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  NR_UE_rrc_inst[ctxt_pP->module_id].cell_group_config->rlc_BearerToAddModList);
+     nr_rrc_pdcp_config_asn1_req(ctxt_pP,
+                                 radioBearerConfig->srb_ToAddModList,
+                                 NULL,
+                                 NULL,
+                                 NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm | (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
+                                 kRRCenc,
+                                 kRRCint,
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 NULL,
+                                 NR_UE_rrc_inst[ctxt_pP->module_id].cell_group_config->rlc_BearerToAddModList,
+                                 0);
      // Refresh SRBs
       nr_rrc_rlc_config_asn1_req(ctxt_pP,
                                   radioBearerConfig->srb_ToAddModList,
@@ -2139,20 +2139,20 @@ nr_rrc_ue_establish_srb2(
      nr_derive_key_up_int(NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm,
                           NR_UE_rrc_inst[ctxt_pP->module_id].kgnb, &kUPint);
 
-       // Refresh DRBs
-        nr_rrc_pdcp_config_asn1_req(ctxt_pP,
-                                    NULL,
-                                    radioBearerConfig->drb_ToAddModList,
-                                    NULL,
-                                    NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm
-                                      | (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
-                                    NULL,
-                                    NULL,
-                                    kUPenc,
-                                    kUPint,
-                                    NULL,
-                                    NR_UE_rrc_inst[ctxt_pP->module_id].defaultDRB,
-                                    NR_UE_rrc_inst[ctxt_pP->module_id].cell_group_config->rlc_BearerToAddModList);
+     // Refresh DRBs
+     nr_rrc_pdcp_config_asn1_req(ctxt_pP,
+                                 NULL,
+                                 radioBearerConfig->drb_ToAddModList,
+                                 NULL,
+                                 NR_UE_rrc_inst[ctxt_pP->module_id].cipheringAlgorithm | (NR_UE_rrc_inst[ctxt_pP->module_id].integrityProtAlgorithm << 4),
+                                 NULL,
+                                 NULL,
+                                 kUPenc,
+                                 kUPint,
+                                 NULL,
+                                 NR_UE_rrc_inst[ctxt_pP->module_id].defaultDRB,
+                                 NR_UE_rrc_inst[ctxt_pP->module_id].cell_group_config->rlc_BearerToAddModList,
+                                 0);
        // Refresh DRBs
         nr_rrc_rlc_config_asn1_req(ctxt_pP,
                                     NULL,
@@ -2723,6 +2723,35 @@ nr_rrc_ue_process_ueCapabilityEnquiry(
 #endif
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+void rrc_ue_generate_RRCReestablishmentRequest(const protocol_ctxt_t *const ctxt_pP, const uint8_t gNB_index) {
+  NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size =
+      do_RRCReestablishmentRequest(
+          ctxt_pP->module_id,
+          (uint8_t *)NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload, 0x1234);
+  LOG_I(NR_RRC,"(%d.%d) Logical Channel UL-CCCH (SRB0), Generating NR_RRCReestablishmentRequest (bytes %d, gNB %d)\n",
+        ctxt_pP->frame, ctxt_pP->subframe, NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size, gNB_index);
+
+  for (int i=0; i<NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size; i++) {
+    LOG_T(NR_RRC,"%x.",NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload[i]);
+  }
+
+  LOG_T(NR_RRC,"\n");
+
+#ifdef ITTI_SIM
+  MessageDef *message_p;
+  uint8_t *message_buffer;
+  message_buffer = itti_malloc (TASK_RRC_NRUE,TASK_RRC_GNB_SIM,
+        NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size);
+  memcpy (message_buffer, (uint8_t*)NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.Payload,
+        NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size);
+  message_p = itti_alloc_new_message (TASK_RRC_NRUE, 0, UE_RRC_CCCH_DATA_IND);
+  UE_RRC_CCCH_DATA_IND (message_p).sdu = message_buffer;
+  UE_RRC_CCCH_DATA_IND (message_p).size  = NR_UE_rrc_inst[ctxt_pP->module_id].Srb0[gNB_index].Tx_buffer.payload_size;
+  itti_send_msg_to_task (TASK_RRC_GNB_SIM, ctxt_pP->instance, message_p);
+#endif
 }
 
 void
