@@ -1090,6 +1090,7 @@ static int Gtpv1uHandleGpdu(int h,
 
   if (qfi != -1 && tunnel->second.callBackSDAP) {
     if ( !tunnel->second.callBackSDAP(&ctxt,
+                                      tunnel->second.rnti,
                                       srb_flag,
                                       rb_id,
                                       mui,
