@@ -390,6 +390,12 @@ typedef struct NR_sched_pusch {
   /// only important for retransmissions; otherwise, the TDA in
   /// NR_pusch_semi_static_t has precedence
   int time_domain_allocation;
+
+  /// the nrOfLayers used for this transmission. Note that this is
+  /// only important for retransmissions; otherwise, the nrOfLayers in
+  /// NR_pusch_semi_static_t has precedence
+  uint8_t nrOfLayers;
+
 } NR_sched_pusch_t;
 
 typedef struct NR_sched_srs {

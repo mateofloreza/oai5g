@@ -1302,7 +1302,7 @@ static bool allocate_ul_retransmission(gNB_MAC_INST *nrmac,
 
   int rbStart = 0; // wrt BWP start
   const uint16_t bwpSize = NRRIV2BW(genericParameters->locationAndBandwidth, MAX_BWP_SIZE);
-  const uint8_t nrOfLayers = 1;
+  const uint8_t nrOfLayers = retInfo->nrOfLayers;
   const uint8_t num_dmrs_cdm_grps_no_data = (sched_ctrl->active_bwp || ubwpd) ? 1 : 2;
   LOG_D(NR_MAC,"retInfo->time_domain_allocation = %d, tda = %d\n", retInfo->time_domain_allocation, tda);
   LOG_D(NR_MAC,"num_dmrs_cdm_grps_no_data %d, tbs %d\n",num_dmrs_cdm_grps_no_data, retInfo->tb_size);
@@ -1466,7 +1466,7 @@ static int comparator(const void *p, const void *q) {
 void pf_ul(module_id_t module_id,
            frame_t frame,
            sub_frame_t slot,
-	   NR_UE_info_t *UE_list[],
+           NR_UE_info_t *UE_list[],
            int max_num_ue,
            int n_rb_sched,
            uint16_t *rballoc_mask) {
@@ -1584,7 +1584,7 @@ void pf_ul(module_id_t module_id,
       /* we want to avoid a lengthy deduction of DMRS and other parameters in
        * every TTI if we can save it, so check whether dci_format, TDA, or
        * num_dmrs_cdm_grps_no_data has changed and only then recompute */
-      const uint8_t nrOfLayers = 1;
+      const uint8_t nrOfLayers = ps->srs_feedback.ul_ri + 1;
       const uint8_t num_dmrs_cdm_grps_no_data = (sched_ctrl->active_ubwp || ubwpd) ? 1 : 2;
       int dci_format = get_dci_format(sched_ctrl);
       const int tda = get_ul_tda(nrmac, scc, sched_pusch->slot);
@@ -1707,7 +1707,7 @@ void pf_ul(module_id_t module_id,
     /* we want to avoid a lengthy deduction of DMRS and other parameters in
      * every TTI if we can save it, so check whether dci_format, TDA, or
      * num_dmrs_cdm_grps_no_data has changed and only then recompute */
-    const uint8_t nrOfLayers = 1;
+    const uint8_t nrOfLayers = ps->srs_feedback.ul_ri + 1;
     const uint8_t num_dmrs_cdm_grps_no_data = (sched_ctrl->active_ubwp || ubwpd) ? 1 : 2;
     int dci_format = get_dci_format(sched_ctrl);
     const int tda = get_ul_tda(nrmac, scc, sched_pusch->slot);
@@ -2028,9 +2028,10 @@ void nr_schedule_ulsch(module_id_t module_id, frame_t frame, sub_frame_t slot)
       /* Save information on MCS, TBS etc for the current initial transmission
        * so we have access to it when retransmitting */
       cur_harq->sched_pusch = *sched_pusch;
-      /* save which time allocation has been used, to be used on
+      /* save which time allocation and nrOfLayers have been used, to be used on
        * retransmissions */
       cur_harq->sched_pusch.time_domain_allocation = ps->time_domain_allocation;
+      cur_harq->sched_pusch.nrOfLayers = ps->nrOfLayers;
       sched_ctrl->sched_ul_bytes += sched_pusch->tb_size;
     } else {
       LOG_D(NR_MAC,
