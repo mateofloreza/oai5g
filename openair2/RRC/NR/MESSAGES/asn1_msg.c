@@ -1255,7 +1255,7 @@ void fill_default_uplinkBWP(NR_BWP_Uplink_t *ubwp,
   pusch_Config->codebookSubset=calloc(1,sizeof(*pusch_Config->codebookSubset));
   *pusch_Config->codebookSubset = NR_PUSCH_Config__codebookSubset_nonCoherent;
   pusch_Config->maxRank=calloc(1,sizeof(*pusch_Config->maxRank));
-  *pusch_Config->maxRank= 1;
+  *pusch_Config->maxRank = 2;
   pusch_Config->rbg_Size=NULL;
   pusch_Config->uci_OnPUSCH=NULL;
   pusch_Config->tp_pi2BPSK=NULL;
@@ -1360,6 +1360,13 @@ void fill_initial_SpCellConfig(int uid,
   SpCellConfig->spCellConfigDedicated = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated));
   SpCellConfig->spCellConfigDedicated->uplinkConfig = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig));
 
+  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig));
+  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->present = NR_SetupRelease_PUSCH_ServingCellConfig_PR_setup;
+  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup));
+  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1 = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1));
+  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers));
+  *SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = 2;
+
   NR_BWP_UplinkDedicated_t *initialUplinkBWP = calloc(1,sizeof(*initialUplinkBWP));
   SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP = initialUplinkBWP;
   initialUplinkBWP->pucch_Config = calloc(1,sizeof(*initialUplinkBWP->pucch_Config));
@@ -1441,7 +1448,7 @@ void fill_initial_SpCellConfig(int uid,
   pusch_Config->codebookSubset=calloc(1,sizeof(*pusch_Config->codebookSubset));
   *pusch_Config->codebookSubset = NR_PUSCH_Config__codebookSubset_nonCoherent;
   pusch_Config->maxRank=calloc(1,sizeof(*pusch_Config->maxRank));
-  *pusch_Config->maxRank= 1;
+  *pusch_Config->maxRank = 2;
   pusch_Config->rbg_Size=NULL;
   pusch_Config->uci_OnPUSCH=NULL;
   pusch_Config->tp_pi2BPSK=NULL;
