@@ -1251,7 +1251,7 @@ void fill_default_uplinkBWP(NR_BWP_Uplink_t *ubwp,
   pusch_Config->codebookSubset=calloc(1,sizeof(*pusch_Config->codebookSubset));
   *pusch_Config->codebookSubset = NR_PUSCH_Config__codebookSubset_nonCoherent;
   pusch_Config->maxRank=calloc(1,sizeof(*pusch_Config->maxRank));
-  *pusch_Config->maxRank = 2;
+  *pusch_Config->maxRank = 1;
   pusch_Config->rbg_Size=NULL;
   pusch_Config->uci_OnPUSCH=NULL;
   pusch_Config->tp_pi2BPSK=NULL;
@@ -1356,13 +1356,6 @@ void fill_initial_SpCellConfig(int uid,
   SpCellConfig->spCellConfigDedicated = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated));
   SpCellConfig->spCellConfigDedicated->uplinkConfig = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig));
 
-  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig));
-  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->present = NR_SetupRelease_PUSCH_ServingCellConfig_PR_setup;
-  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup));
-  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1 = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1));
-  SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers));
-  *SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = 2;
-
   NR_BWP_UplinkDedicated_t *initialUplinkBWP = calloc(1,sizeof(*initialUplinkBWP));
   SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP = initialUplinkBWP;
   initialUplinkBWP->pucch_Config = calloc(1,sizeof(*initialUplinkBWP->pucch_Config));
@@ -1444,7 +1437,7 @@ void fill_initial_SpCellConfig(int uid,
   pusch_Config->codebookSubset=calloc(1,sizeof(*pusch_Config->codebookSubset));
   *pusch_Config->codebookSubset = NR_PUSCH_Config__codebookSubset_nonCoherent;
   pusch_Config->maxRank=calloc(1,sizeof(*pusch_Config->maxRank));
-  *pusch_Config->maxRank = 2;
+  *pusch_Config->maxRank = 1;
   pusch_Config->rbg_Size=NULL;
   pusch_Config->uci_OnPUSCH=NULL;
   pusch_Config->tp_pi2BPSK=NULL;
@@ -1893,12 +1886,13 @@ void update_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig,
 
   if(scc) {
 
-    // SRS configuration
+    // UL and SRS configuration
     if (configuration->do_SRS &&
         SpCellConfig &&
         SpCellConfig->spCellConfigDedicated &&
         SpCellConfig->spCellConfigDedicated->uplinkConfig &&
         SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP) {
+
       if (!SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP->srs_Config) {
         SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP->srs_Config =
             calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP->srs_Config));
@@ -1908,6 +1902,42 @@ void update_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig,
                  uecap,
                  uid,
                  configuration->do_SRS);
+
+      if (uecap &&
+          uecap->featureSets &&
+          uecap->featureSets->featureSetsUplinkPerCC &&
+          uecap->featureSets->featureSetsUplinkPerCC->list.count > 0) {
+        NR_FeatureSetUplinkPerCC_t *ul_feature_setup_per_cc = uecap->featureSets->featureSetsUplinkPerCC->list.array[0];
+        uint8_t ul_max_layers = 1;
+        if (ul_feature_setup_per_cc->mimo_CB_PUSCH->maxNumberMIMO_LayersCB_PUSCH) {
+          switch(*ul_feature_setup_per_cc->mimo_CB_PUSCH->maxNumberMIMO_LayersCB_PUSCH) {
+            case NR_MIMO_LayersUL_twoLayers:
+              ul_max_layers = 2;
+              break;
+            case NR_MIMO_LayersUL_fourLayers:
+              ul_max_layers = 4;
+              break;
+            default:
+              ul_max_layers = 1;
+          }
+        }
+        NR_UplinkConfig_t	*uplinkConfig = SpCellConfig->spCellConfigDedicated->uplinkConfig;
+        if (uplinkConfig->initialUplinkBWP->pusch_Config) {
+          NR_PUSCH_Config_t	*pusch_Config = SpCellConfig->spCellConfigDedicated->uplinkConfig->initialUplinkBWP->pusch_Config->choice.setup;
+          if (pusch_Config->maxRank == NULL) {
+            pusch_Config->maxRank = calloc(1,sizeof(*pusch_Config->maxRank));
+          }
+          *pusch_Config->maxRank = ul_max_layers;
+        }
+        if (SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig == NULL) {
+          SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig));
+          SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->present = NR_SetupRelease_PUSCH_ServingCellConfig_PR_setup;
+          SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup));
+          SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1 = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1));
+          SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = calloc(1,sizeof(*SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers));
+        }
+        *SpCellConfig->spCellConfigDedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = ul_max_layers;
+      }
     }
 
     // Set DL MCS table

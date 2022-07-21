@@ -1011,6 +1011,11 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
                            const uint16_t num_prgs,
                            const uint8_t ul_ri) {
 
+  if (ul_ri > 0) {
+    LOG_D(NR_MAC, "TPMI computation for ul_ri %i is not implemented yet!\n", ul_ri);
+    return 0;
+  }
+
   uint8_t tpmi_sel = 0;
   int16_t precoded_channel_matrix_re[num_prgs*num_gnb_antenna_elements];
   int16_t precoded_channel_matrix_im[num_prgs*num_gnb_antenna_elements];
@@ -1181,11 +1186,28 @@ void handle_nr_srs_measurements(const module_id_t module_id,
       }
 #endif
 
-      // TODO: This should be improved
       NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
       NR_pusch_semi_static_t *ps = &sched_ctrl->pusch_semi_static;
       ps->srs_feedback.sri = NR_SRS_SRI_0;
-      ps->srs_feedback.ul_ri = 0; // TODO: Compute this
+      ps->srs_feedback.ul_ri = 0;
+
+      NR_PUSCH_Config_t *pusch_Config = NULL;
+      if (sched_ctrl->active_ubwp) {
+        NR_BWP_UplinkDedicated_t *ubwpd = sched_ctrl->active_ubwp->bwp_Dedicated;
+        pusch_Config = (ubwpd && ubwpd->pusch_Config) ? ubwpd->pusch_Config->choice.setup : NULL;
+      } else if (UE->CellGroup && UE->CellGroup->spCellConfig && UE->CellGroup->spCellConfig->spCellConfigDedicated) {
+        NR_UplinkConfig_t	*uplinkConfig = UE->CellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig;
+        NR_BWP_UplinkDedicated_t *ubwpd  = uplinkConfig ? uplinkConfig->initialUplinkBWP : NULL;
+        pusch_Config = (ubwpd && ubwpd->pusch_Config) ? ubwpd->pusch_Config->choice.setup :  NULL;
+      }
+
+      // TODO: For testing, we are assuming the maximum value of ul_ri. In a next commit, the ul_ri will be computed.
+      if (nr_srs_normalized_channel_iq_matrix.num_gnb_antenna_elements == 2 &&
+          nr_srs_normalized_channel_iq_matrix.num_ue_srs_ports == 2 &&
+          pusch_Config && *pusch_Config->maxRank == 2) {
+        ps->srs_feedback.ul_ri = 1;
+      }
+
       ps->srs_feedback.tpmi = nr_srs_tpmi_estimation(ps->pusch_Config,
                                                      ps->transform_precoding,
                                                      nr_srs_normalized_channel_iq_matrix.channel_matrix,
@@ -1195,7 +1217,9 @@ void handle_nr_srs_measurements(const module_id_t module_id,
                                                      nr_srs_normalized_channel_iq_matrix.prg_size,
                                                      nr_srs_normalized_channel_iq_matrix.num_prgs,
                                                      ps->srs_feedback.ul_ri);
+
       sprintf(stats->srs_stats,"UL-RI %d, TPMI %d", ps->srs_feedback.ul_ri+1, ps->srs_feedback.tpmi);
+
       break;
     }
 
