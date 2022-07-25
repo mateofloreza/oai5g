@@ -748,7 +748,7 @@ static void add_drb_am(int rnti, struct NR_DRB_ToAddMod *s, NR_RLC_BearerConfig_
 {
   nr_rlc_entity_t            *nr_rlc_am;
   nr_rlc_ue_t                *ue;
-
+  
   struct NR_RLC_Config *r = rlc_BearerConfig->rlc_Config;
   struct NR_LogicalChannelConfig *l = rlc_BearerConfig->mac_LogicalChannelConfig;
   int drb_id = s->drb_Identity;
