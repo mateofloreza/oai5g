@@ -58,7 +58,6 @@ RAN_CONTEXT_t RC;
 int32_t uplink_frequency_offset[MAX_NUM_CCs][4];
 
 double cpuf;
-//uint8_t nfapi_mode = 0;
 uint16_t NB_UE_INST = 1;
 
 // needed for some functions
@@ -66,11 +65,33 @@ openair0_config_t openair0_cfg[MAX_CARDS];
 
 uint8_t const nr_rv_round_map[4] = {0, 2, 3, 1};
 
+nfapi_mode_t nfapi_mod;
+nfapi_mode_t nfapi_getmode(void) {
+  return nfapi_mod;
+}
+
 uint64_t get_softmodem_optmask(void) {return 0;}
 static softmodem_params_t softmodem_params;
 softmodem_params_t *get_softmodem_params(void) {
   return &softmodem_params;
 }
+
+void nr_fill_dl_indication(nr_downlink_indication_t *dl_ind,
+                           fapi_nr_dci_indication_t *dci_ind,
+                           fapi_nr_rx_indication_t *rx_ind,
+                           UE_nr_rxtx_proc_t *proc,
+                           PHY_VARS_NR_UE *ue,
+                           uint8_t gNB_id,
+                           void *phy_data) {}
+void nr_fill_rx_indication(fapi_nr_rx_indication_t *rx_ind,
+                           uint8_t pdu_type,
+                           uint8_t gNB_id,
+                           PHY_VARS_NR_UE *ue,
+                           NR_UE_DLSCH_t *dlsch0,
+                           NR_UE_DLSCH_t *dlsch1,
+                           uint16_t n_pdus,
+                           UE_nr_rxtx_proc_t *proc,
+			   void * typeSpecific ) {}
 
 void init_downlink_harq_status(NR_DL_UE_HARQ_t *dl_harq) {}
 

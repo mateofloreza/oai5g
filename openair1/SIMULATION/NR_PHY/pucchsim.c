@@ -65,6 +65,12 @@ uint8_t const nr_rv_round_map[4] = {0, 2, 3, 1};
 PHY_VARS_NR_UE * PHY_vars_UE_g[1][1]={{NULL}};
 
 void init_downlink_harq_status(NR_DL_UE_HARQ_t *dl_harq) {}
+nfapi_mode_t nfapi_mod;
+nfapi_mode_t nfapi_getmode(void) {
+  return nfapi_mod;
+}
+void nfapi_setmode(nfapi_mode_t nfapi_mode) { nfapi_mod=nfapi_mode; }
+
 
 int main(int argc, char **argv)
 {
