@@ -70,8 +70,6 @@ int compute_delta_tf(int tbs_bits,
   // if the PUSCH transmission is over more than one layer delta_tf = 0
   if(deltaMCS == NULL || n_layers>1)
     return 0;
-  else
-    AssertFatal(1==0,"Compute DeltaTF not yet fully supported\n");
 
   const int n_re = (NR_NB_SC_PER_RB * n_symbols - n_dmrs) * rb;
   const int BPRE = tbs_bits/n_re;  //TODO change for PUSCH with CSI
@@ -115,7 +113,7 @@ int nr_process_mac_pdu(instance_t module_idP,
 {
 
   uint8_t done = 0;
-
+  NR_UE_UL_BWP_t *BWP = &UE->current_UL_BWP;
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
 
   if (pduP[0] != UL_SCH_LCID_PADDING)
@@ -244,14 +242,14 @@ int nr_process_mac_pdu(instance_t module_idP,
         else
           PH = phr->PH - 32 + (phr->PH - 54);
         // in sched_ctrl we set normalized PH wrt MCS and PRBs
-        long* deltaMCS = sched_ctrl->pusch_semi_static.pusch_Config->pusch_PowerControl->deltaMCS;
+        long* deltaMCS = BWP->pusch_Config->pusch_PowerControl->deltaMCS;
         sched_ctrl->ph = PH +
                          compute_bw_factor(sched_pusch->mu, sched_pusch->rbSize) +
                          compute_delta_tf(sched_pusch->tb_size<<3,
                                           sched_pusch->rbSize,
-                                          0, //n_layers
-                                          0, //n_symbols
-                                          0, //n_dmrs
+                                          sched_pusch->nrOfLayers,
+                                          sched_pusch->tda_info.nrOfSymbols, //n_symbols
+                                          sched_pusch->dmrs_info.num_dmrs_symb*sched_pusch->dmrs_info.N_PRB_DMRS, //n_dmrs
                                           deltaMCS);
         /* 38.133 Table10.1.18.1-1 */
         sched_ctrl->pcmax = PCMAX - 29;
@@ -896,19 +894,19 @@ static bool nr_UE_is_to_be_scheduled(const NR_ServingCellConfigCommon_t *scc,
   return has_data || sched_ctrl->SR || high_inactivity;
 }
 
-void update_ul_ue_R_Qm(int mcs, const NR_PUSCH_Config_t *pusch_Config, uint16_t *R, uint8_t *Qm)
+void update_ul_ue_R_Qm(int mcs, int mcs_table, const NR_PUSCH_Config_t *pusch_Config, uint16_t *R, uint8_t *Qm)
 {
-  *R = nr_get_code_rate_ul(mcs, ps->mcs_table);
-  *Qm = nr_get_Qm_ul(mcs, ps->mcs_table);
+  *R = nr_get_code_rate_ul(mcs, mcs_table);
+  *Qm = nr_get_Qm_ul(mcs, mcs_table);
 
-  if (pusch_Config && pusch_Config->tp_pi2BPSK && ((ps->mcs_table == 3 && mcs < 2) || (ps->mcs_table == 4 && mcs < 6))) {
+  if (pusch_Config && pusch_Config->tp_pi2BPSK && ((mcs_table == 3 && mcs < 2) || (mcs_table == 4 && mcs < 6))) {
     *R >>= 1;
     *Qm <<= 1;
   }
 }
 
 
-void nr_ue_max_mcs_min_rb(int mu, int ph, NR_pusch_semi_static_t *ps, long* deltaMCS, uint16_t minRb, uint32_t tbs, uint16_t *Rb, uint8_t *mcs)
+void nr_ue_max_mcs_min_rb(int mu, int ph, NR_sched_pusch_t *sched_pusch, NR_UE_UL_BWP_t *BWP, uint16_t minRb, uint32_t tbs, uint16_t *Rb, uint8_t *mcs)
 {
   AssertFatal(*Rb >= minRb, "illegal Rb %d < minRb %d\n", *Rb, minRb);
   AssertFatal(*mcs >= 0 && *mcs <= 28, "illegal MCS %d\n", *mcs);
@@ -916,14 +914,15 @@ void nr_ue_max_mcs_min_rb(int mu, int ph, NR_pusch_semi_static_t *ps, long* delt
   int tbs_bits = tbs << 3;
   uint16_t R;
   uint8_t Qm;
-  update_ul_ue_R_Qm(*mcs, ps, &R, &Qm);
+  update_ul_ue_R_Qm(*mcs, BWP->mcs_table, BWP->pusch_Config, &R, &Qm);
 
+  long *deltaMCS = BWP->pusch_Config ? BWP->pusch_Config->pusch_PowerControl->deltaMCS : NULL;
   int tx_power = compute_bw_factor(mu, *Rb) +
                  compute_delta_tf(tbs_bits,
                                   *Rb,
-                                  ps->nrOfLayers,
-                                  ps->nrOfSymbols,
-                                  ps->N_PRB_DMRS*ps->num_dmrs_symb,
+                                  sched_pusch->nrOfLayers,
+                                  sched_pusch->tda_info.nrOfSymbols,
+                                  sched_pusch->dmrs_info.N_PRB_DMRS*sched_pusch->dmrs_info.num_dmrs_symb,
                                   deltaMCS);
 
   while (ph < tx_power && *Rb >= minRb) {
@@ -931,21 +930,21 @@ void nr_ue_max_mcs_min_rb(int mu, int ph, NR_pusch_semi_static_t *ps, long* delt
     tx_power = compute_bw_factor(mu, *Rb) +
                compute_delta_tf(tbs_bits,
                                 *Rb,
-                                ps->nrOfLayers,
-                                ps->nrOfSymbols,
-                                ps->N_PRB_DMRS*ps->num_dmrs_symb,
+                                sched_pusch->nrOfLayers,
+                                sched_pusch->tda_info.nrOfSymbols,
+                                sched_pusch->dmrs_info.N_PRB_DMRS*sched_pusch->dmrs_info.num_dmrs_symb,
                                 deltaMCS);
   }
 
   while (ph < tx_power && *mcs > 6) {
     (*mcs)--;
-    update_ul_ue_R_Qm(*mcs, ps, &R, &Qm);
+    update_ul_ue_R_Qm(*mcs, BWP->mcs_table, BWP->pusch_Config, &R, &Qm);
     tx_power = compute_bw_factor(mu, *Rb) +
                compute_delta_tf(tbs_bits,
                                 *Rb,
-                                ps->nrOfLayers,
-                                ps->nrOfSymbols,
-                                ps->N_PRB_DMRS*ps->num_dmrs_symb,
+                                sched_pusch->nrOfLayers,
+                                sched_pusch->tda_info.nrOfSymbols,
+                                sched_pusch->dmrs_info.N_PRB_DMRS*sched_pusch->dmrs_info.num_dmrs_symb,
                                 deltaMCS);
   }
 
@@ -1238,7 +1237,7 @@ void pf_ul(module_id_t module_id,
 
       NR_sched_pusch_t *sched_pusch = &sched_ctrl->sched_pusch;
       sched_pusch->mcs = min(nrmac->min_grant_mcs, sched_pusch->mcs);
-      update_ul_ue_R_Qm(sched_pusch->mcs, BWP->pusch_Config, &sched_pusch->R, &sched_pusch->Qm);
+      update_ul_ue_R_Qm(sched_pusch->mcs, BWP->mcs_table, BWP->pusch_Config, &sched_pusch->R, &sched_pusch->Qm);
       sched_pusch->rbStart = rbStart;
       sched_pusch->rbSize = min_rb;
       sched_pusch->tb_size = nr_compute_tbs(sched_pusch->Qm,
@@ -1319,7 +1318,7 @@ void pf_ul(module_id_t module_id,
                        BWP,
                        tda_info,
                        sched_pusch->nrOfLayers);
-    update_ul_ue_R_Qm(sched_pusch->mcs, BWP->pusch_Config, &sched_pusch->R, &sched_pusch->Qm);
+    update_ul_ue_R_Qm(sched_pusch->mcs, BWP->mcs_table, BWP->pusch_Config, &sched_pusch->R, &sched_pusch->Qm);
 
     int rbStart = 0;
     const uint16_t slbitmap = SL_to_bitmap(tda_info->startSymbolIndex, tda_info->nrOfSymbols);
@@ -1341,8 +1340,7 @@ void pf_ul(module_id_t module_id,
     /* Calculate the current scheduling bytes */
     const int B = cmax(sched_ctrl->estimated_ul_buffer - sched_ctrl->sched_ul_bytes, 0);
     /* adjust rbSize and MCS according to PHR and BPRE */
-    sched_pusch->mu  = scc->uplinkConfigCommon->initialUplinkBWP->genericParameters.subcarrierSpacing;
-    nr_ue_max_mcs_min_rb(sched_pusch->mu, sched_ctrl->ph, ps, ps->pusch_Config->pusch_PowerControl->deltaMCS, min_rbSize, B, &max_rbSize, &sched_pusch->mcs);
+    nr_ue_max_mcs_min_rb(BWP->scs, sched_ctrl->ph, sched_pusch, BWP, min_rbSize, B, &max_rbSize, &sched_pusch->mcs);
 
     if (sched_pusch->mcs < sched_ctrl->ul_bler_stats.mcs)
       sched_ctrl->ul_bler_stats.mcs = sched_pusch->mcs; /* force estimated MCS down */
