@@ -216,6 +216,15 @@ uint8_t get_mcs_from_cqi(int mcs_table, int cqi_table, int cqi_idx)
   return 9;
 }
 
+uint8_t get_BG(uint32_t A, uint16_t R) {
+
+  float code_rate = (float) R / 10240.0f;
+  if ((A <=292) || ((A<=3824) && (code_rate <= 0.6667)) || code_rate <= 0.25)
+    return 2;
+  else
+    return 1;
+}
+
 void set_dl_dmrs_params(NR_pdsch_dmrs_t *dmrs,
                         const NR_ServingCellConfigCommon_t *scc,
                         NR_UE_DL_BWP_t *BWP,
@@ -280,7 +289,6 @@ void set_dl_dmrs_params(NR_pdsch_dmrs_t *dmrs,
   dmrs->dl_dmrs_symb_pos = fill_dmrs_mask(pdsch_Config, scc->dmrs_TypeA_Position, tda_info->nrOfSymbols, tda_info->startSymbolIndex, tda_info->mapping_type, frontloaded_symb);
   dmrs->N_DMRS_SLOT = get_num_dmrs(dmrs->dl_dmrs_symb_pos);
   LOG_D(NR_MAC,"Filling dmrs info, ps->N_PRB_DMRS %d, ps->dl_dmrs_symb_pos %x, ps->N_DMRS_SLOT %d\n",dmrs->N_PRB_DMRS,dmrs->dl_dmrs_symb_pos,dmrs->N_DMRS_SLOT);
-
 }
 
 NR_ControlResourceSet_t *get_coreset(gNB_MAC_INST *nrmac,
@@ -2930,5 +2938,22 @@ void schedule_nr_bwp_switch(module_id_t module_id,
             frame, slot, UE->rnti, DLBWP->bwp_id, sched_ctrl->next_dl_bwp_id, ULBWP->bwp_id, sched_ctrl->next_ul_bwp_id);
       nr_mac_rrc_bwp_switch_req(module_id, frame, slot, UE->rnti, sched_ctrl->next_dl_bwp_id, sched_ctrl->next_ul_bwp_id);
     }
+  }
+}
+
+void UL_tti_req_ahead_initialization(gNB_MAC_INST * gNB, NR_ServingCellConfigCommon_t *scc, int n, int CCid) {
+
+  if(gNB->UL_tti_req_ahead[CCid]) return;
+
+  gNB->UL_tti_req_ahead[CCid] = calloc(n, sizeof(nfapi_nr_ul_tti_request_t));
+  AssertFatal(gNB->UL_tti_req_ahead[CCid],
+              "could not allocate memory for RC.nrmac[]->UL_tti_req_ahead[]\n");
+  /* fill in slot/frame numbers: slot is fixed, frame will be updated by scheduler
+   * consider that scheduler runs sl_ahead: the first sl_ahead slots are
+   * already "in the past" and thus we put frame 1 instead of 0! */
+  for (int i = 0; i < n; ++i) {
+    nfapi_nr_ul_tti_request_t *req = &gNB->UL_tti_req_ahead[CCid][i];
+    req->SFN = i < (gNB->if_inst->sl_ahead-1);
+    req->Slot = i;
   }
 }

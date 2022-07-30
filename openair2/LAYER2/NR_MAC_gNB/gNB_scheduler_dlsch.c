@@ -365,6 +365,18 @@ void nr_store_dlsch_buffer(module_id_t module_id,
   }
 }
 
+void abort_nr_dl_harq(NR_UE_info_t* UE, int8_t harq_pid) {
+
+  NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
+  NR_UE_harq_t *harq = &sched_ctrl->harq_processes[harq_pid];
+
+  harq->ndi ^= 1;
+  harq->round = 0;
+  UE->mac_stats.dl.errors++;
+  add_tail_nr_list(&sched_ctrl->available_dl_harq, harq_pid);
+
+}
+
 bool allocate_dl_retransmission(module_id_t module_id,
                                 frame_t frame,
                                 sub_frame_t slot,
@@ -1028,6 +1040,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
     pdsch_pdu->maintenance_parms_v3.tbSizeLbrmBytes = nr_compute_tbslbrm(current_BWP->mcsTableIdx,
                                                                          bw_tbslbrm,
                                                                          nl_tbslbrm);
+    pdsch_pdu->maintenance_parms_v3.ldpcBaseGraph = get_BG(TBS<<3,R);
 
     NR_PDSCH_Config_t *pdsch_Config = current_BWP->pdsch_Config;
 

@@ -389,6 +389,7 @@ typedef struct NR_pusch_dmrs {
 typedef struct NR_sched_pusch {
   int frame;
   int slot;
+  int mu;
 
   /// RB allocation within active uBWP
   uint16_t rbSize;
@@ -678,7 +679,6 @@ typedef struct {
 } NR_UE_sched_ctrl_t;
 
 typedef struct {
-  boolean_t fiveG_connected;
   uicc_t *uicc;
 } NRUEcontext_t;
 
@@ -698,6 +698,7 @@ typedef struct NR_mac_stats {
   uint32_t pucch0_DTX;
   int cumul_rsrp;
   uint8_t num_rsrp_meas;
+  int8_t srs_wide_band_snr;
 } NR_mac_stats_t;
 
 typedef struct NR_bler_options {
@@ -763,12 +764,15 @@ typedef struct gNB_MAC_INST_s {
   int                             pusch_target_snrx10;
   /// Pucch target SNR
   int                             pucch_target_snrx10;
+  /// SNR threshold needed to put or not a PRB in the black list
+  int                             ul_prbblack_SNR_threshold;
   /// PUCCH Failure threshold (compared to consecutive PUCCH DTX)
   int                             pucch_failure_thres;
   /// PUSCH Failure threshold (compared to consecutive PUSCH DTX)
   int                             pusch_failure_thres;
   /// Subcarrier Offset
   int                             ssb_SubcarrierOffset;
+  int                             ssb_OffsetPointA;
   /// SIB1 Time domain allocation
   int                             sib1_tda;
   int                             minRXTXTIMEpdsch;
@@ -777,7 +781,7 @@ typedef struct gNB_MAC_INST_s {
   /// current PDU index (BCH,DLSCH)
   uint16_t pdu_index[NFAPI_CC_MAX];
   int num_ulprbbl;
-  uint16_t ulprbbl[275];
+  uint16_t ulprbbl[MAX_BWP_SIZE];
   /// NFAPI Config Request Structure
   nfapi_nr_config_request_scf_t     config[NFAPI_CC_MAX];
   /// NFAPI DL Config Request Structure

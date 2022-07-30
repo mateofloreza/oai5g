@@ -797,14 +797,8 @@ static void handle_dl_harq(NR_UE_info_t * UE,
     harq->ndi ^= 1;
 
   } else if (harq->round >= harq_round_max - 1) {
-    add_tail_nr_list(&UE->UE_sched_ctrl.available_dl_harq, harq_pid);
-    harq->round = 0;
-    harq->ndi ^= 1;
-
-    NR_mac_stats_t *stats = &UE->mac_stats;
-    stats->dl.errors++;
-    LOG_D(NR_MAC, "retransmission error for UE %04x (total %"PRIu64")\n", UE->rnti, stats->dl.errors);
-
+    abort_nr_dl_harq(UE, harq_pid);
+    LOG_D(NR_MAC, "retransmission error for UE %04x (total %"PRIu64")\n", UE->rnti, UE->mac_stats.dl.errors);
   } else {
     LOG_D(PHY,"NACK for: pid %d, ue %04x\n",harq_pid, UE->rnti);
     add_tail_nr_list(&UE->UE_sched_ctrl.retrans_dl_harq, harq_pid);
@@ -1843,7 +1837,7 @@ void nr_sr_reporting(gNB_MAC_INST *nrmac, frame_t SFN, sub_frame_t slot)
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
     NR_UE_UL_BWP_t *BWP = &UE->current_UL_BWP;
     const int n_slots_frame = nr_slots_per_frame[BWP->scs];
-    if (sched_ctrl->ul_failure==1) continue;
+    if (sched_ctrl->ul_failure==1 || sched_ctrl->rrc_processing_timer>0) continue;
     NR_PUCCH_Config_t *pucch_Config = BWP->pucch_Config;
 
     if (!pucch_Config || !pucch_Config->schedulingRequestResourceToAddModList)
