@@ -1999,7 +1999,7 @@ void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
       // UL-SCH indicator
       pos += 1;
       *dci_pdu |= ((uint64_t)dci_pdu_rel15->ulsch_indicator & 0x1) << (dci_size - pos);
-
+#if 0
       LOG_I(NR_MAC,"============= NR_UL_DCI_FORMAT_0_1 =============\n");
       LOG_I(NR_MAC,"dci_size = %i\n", dci_size);
       LOG_I(NR_MAC,"dci_pdu_rel15->format_indicator = %i\n", dci_pdu_rel15->format_indicator);
@@ -2033,7 +2033,7 @@ void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
             N_RB,
             dci_size-pos,
             *dci_pdu);
-
+#endif
       break;
     }
     break;
