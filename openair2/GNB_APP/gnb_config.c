@@ -680,7 +680,7 @@ void RCconfig_NR_L1(void) {
     }
   }
 
-  if (NFAPI_MODE == NFAPI_MODE_VNF || NFAPI_MODE == NFAPI_MODE_AERIAL) {
+  if (NFAPI_MODE != NFAPI_MODE_PNF) {
     paramdef_t GNBSParams[] = GNBSPARAMS_DESC;
     ////////// Identification parameters
     paramdef_t GNBParams[] = GNBPARAMS_DESC;
@@ -699,9 +699,9 @@ void RCconfig_NR_L1(void) {
     if (ulprbbl) LOG_I(NR_PHY, "PRB blacklist %s\n", ulprbbl);
     char *save = NULL;
     char *pt = strtok_r(ulprbbl, ",", &save);
-    int prbbl[275];
+    uint16_t prbbl[275];
     int num_prbbl = 0;
-    memset(prbbl, 0, 275 * sizeof(int));
+    memset(prbbl, 0, 275 * sizeof(uint16_t));
 
   while (pt) {
     const int rb = atoi(pt);
@@ -798,9 +798,9 @@ void RCconfig_NR_L1(void) {
 
 void RCconfig_nr_macrlc() {
   int j = 0;
-  int prbbl[275];
+  uint16_t prbbl[275];
   int num_prbbl=0;
-  if (NFAPI_MODE==NFAPI_MODE_VNF || NFAPI_MODE == NFAPI_MODE_AERIAL) {
+  if (NFAPI_MODE != NFAPI_MODE_PNF) {
     paramdef_t GNBSParams[] = GNBSPARAMS_DESC;
     ////////// Identification parameters
     paramdef_t GNBParams[] = GNBPARAMS_DESC;
@@ -811,12 +811,11 @@ void RCconfig_nr_macrlc() {
     int num_gnbs = GNBSParams[GNB_ACTIVE_GNBS_IDX].numelt;
     AssertFatal (num_gnbs > 0, "Failed to parse config file no gnbs %s \n", GNB_CONFIG_STRING_ACTIVE_GNBS);
 
-    config_getlist(&GNBParamList, GNBParams, sizeof(GNBParams) / sizeof(paramdef_t), NULL);
+    config_getlist( &GNBParamList,GNBParams,sizeof(GNBParams)/sizeof(paramdef_t),NULL);
     char *ulprbbl = *GNBParamList.paramarray[0][GNB_ULPRBBLACKLIST_IDX].strptr;
     char *save = NULL;
-    char *pt = strtok(ulprbbl, ",");
-
-    memset(prbbl, 0, 275 * sizeof(int));
+    char *pt = strtok_r(ulprbbl, ",",&save);
+    memset(prbbl, 0, 275 * sizeof(uint16_t));
     while (pt) {
       const int prb = atoi(pt);
       AssertFatal(prb < 275, "RB %d out of bounds (max 275)\n", prb);
