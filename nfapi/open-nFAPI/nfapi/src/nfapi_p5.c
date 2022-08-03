@@ -866,24 +866,27 @@ static uint8_t pack_nr_config_request(void *msg, uint8_t **ppWritePackedMsg, uin
   pack_tlv(NFAPI_NR_CONFIG_SSB_PER_RACH_TAG, &(pNfapiMsg->prach_config.ssb_per_rach), ppWritePackedMsg, end,
            &pack_uint8_tlv_value);
   numTLVs++;
-/* was unused */
-  pNfapiMsg->prach_config.prach_multiple_carriers_in_a_band.tl.tag = NFAPI_NR_CONFIG_PRACH_MULTIPLE_CARRIERS_IN_A_BAND_TAG;
-  pNfapiMsg->prach_config.prach_multiple_carriers_in_a_band.value = 0;
+
+  if(pNfapiMsg->prach_config.prach_multiple_carriers_in_a_band.tl.tag != 0){
     pack_tlv(NFAPI_NR_CONFIG_PRACH_MULTIPLE_CARRIERS_IN_A_BAND_TAG,
              &(pNfapiMsg->prach_config.prach_multiple_carriers_in_a_band), ppWritePackedMsg, end,
              &pack_uint8_tlv_value);
     numTLVs++;
+  }
 
   // END PRACH Configuration
   // START SSB Table
-  /*pack_tlv(NFAPI_NR_CONFIG_SSB_OFFSET_POINT_A_TAG, &(pNfapiMsg->ssb_table.ssb_offset_point_a), ppWritePackedMsg, end,
-           &pack_uint16_tlv_value);
-  numTLVs++;
-*//*
-  pack_tlv(NFAPI_NR_CONFIG_BETA_PSS_TAG, &(pNfapiMsg->ssb_table.beta_pss), ppWritePackedMsg, end,
-           &pack_uint8_tlv_value);
-  numTLVs++;
-*/
+  if(pNfapiMsg->ssb_table.ssb_offset_point_a.tl.tag != 0){
+    pack_tlv(NFAPI_NR_CONFIG_SSB_OFFSET_POINT_A_TAG, &(pNfapiMsg->ssb_table.ssb_offset_point_a), ppWritePackedMsg, end,
+             &pack_uint16_tlv_value);
+    numTLVs++;
+  }
+  if(pNfapiMsg->ssb_table.beta_pss.tl.tag != 0){
+    pack_tlv(NFAPI_NR_CONFIG_BETA_PSS_TAG, &(pNfapiMsg->ssb_table.beta_pss), ppWritePackedMsg, end,
+             &pack_uint8_tlv_value);
+    numTLVs++;
+  }
+
   pack_tlv(NFAPI_NR_CONFIG_SSB_PERIOD_TAG, &(pNfapiMsg->ssb_table.ssb_period), ppWritePackedMsg, end,
            &pack_uint8_tlv_value);
   numTLVs++;
@@ -892,31 +895,10 @@ static uint8_t pack_nr_config_request(void *msg, uint8_t **ppWritePackedMsg, uin
            end, &pack_uint8_tlv_value);
   numTLVs++;
 
-  /*
-   *
-    uint32_t nMIB[3];
-    nMIB[0]      = 1;//config_req_params["nMIB"].child(0).as<uint32_t>();
-    nMIB[1]      = 13;//config_req_params["nMIB"].child(1).as<uint32_t>();
-    nMIB[2]      = 4;//config_req_params["nMIB"].child(2).as<uint32_t>();
-    uint32_t mib = (nMIB[2] << 16) | (nMIB[1] << 9) | nMIB[0];
-
-    ptr = add_tlv(req, ptr, CONFIG_TLV_MIB, 4, mib);
-   *
-  //gNB->common_channels[CC_id]
-  uint32_t nMIB[3];
-  nMIB[0]      = 1;//config_req_params["nMIB"].child(0).as<uint32_t>();
-  nMIB[1]      = 13;//config_req_params["nMIB"].child(1).as<uint32_t>();
-  nMIB[2]      = 4;//config_req_params["nMIB"].child(2).as<uint32_t>();
-  uint32_t mib = (nMIB[2] << 16) | (nMIB[1] << 9) | nMIB[0];
-   * */
-
-
-/* was unused */
-  pNfapiMsg->ssb_table.MIB.tl.tag = NFAPI_NR_CONFIG_MIB_TAG;
-  //pNfapiMsg->ssb_table.MIB.value = mib;
-
+  if(pNfapiMsg->ssb_table.MIB.tl.tag != 0){ // if it has a tag, it means it has a value
     pack_tlv(NFAPI_NR_CONFIG_MIB_TAG, &(pNfapiMsg->ssb_table.MIB), ppWritePackedMsg, end, &pack_uint32_tlv_value);
     numTLVs++;
+  }
 
   pack_tlv(NFAPI_NR_CONFIG_SSB_MASK_TAG, &(pNfapiMsg->ssb_table.ssb_mask_list[0].ssb_mask), ppWritePackedMsg, end,
            &pack_uint32_tlv_value);
@@ -933,24 +915,25 @@ static uint8_t pack_nr_config_request(void *msg, uint8_t **ppWritePackedMsg, uin
     }
   }
   // FIXME Check if next 2 TLVs have value
-  /*was unused*//*
-  pNfapiMsg->ssb_table.ss_pbch_multiple_carriers_in_a_band.tl.tag = NFAPI_NR_CONFIG_SS_PBCH_MULTIPLE_CARRIERS_IN_A_BAND_TAG;
-  pNfapiMsg->ssb_table.ss_pbch_multiple_carriers_in_a_band.value = 0;
-  pack_tlv(NFAPI_NR_CONFIG_SS_PBCH_MULTIPLE_CARRIERS_IN_A_BAND_TAG,
-           &(pNfapiMsg->ssb_table.ss_pbch_multiple_carriers_in_a_band), ppWritePackedMsg, end, &pack_uint8_tlv_value);
-  numTLVs++;
- /*was unused*/
- /* pNfapiMsg->ssb_table.multiple_cells_ss_pbch_in_a_carrier.tl.tag = NFAPI_NR_CONFIG_MULTIPLE_CELLS_SS_PBCH_IN_A_CARRIER_TAG;
-  pNfapiMsg->ssb_table.multiple_cells_ss_pbch_in_a_carrier.value = 0;
-  pack_tlv(NFAPI_NR_CONFIG_MULTIPLE_CELLS_SS_PBCH_IN_A_CARRIER_TAG,
-           &(pNfapiMsg->ssb_table.multiple_cells_ss_pbch_in_a_carrier), ppWritePackedMsg, end, &pack_uint8_tlv_value);
-  numTLVs++;
+
+  if(pNfapiMsg->ssb_table.ss_pbch_multiple_carriers_in_a_band.tl.tag != 0){
+    pack_tlv(NFAPI_NR_CONFIG_SS_PBCH_MULTIPLE_CARRIERS_IN_A_BAND_TAG,
+             &(pNfapiMsg->ssb_table.ss_pbch_multiple_carriers_in_a_band), ppWritePackedMsg, end, &pack_uint8_tlv_value);
+    numTLVs++;
+  }
+
+  if(pNfapiMsg->ssb_table.multiple_cells_ss_pbch_in_a_carrier.tl.tag != 0){
+    pack_tlv(NFAPI_NR_CONFIG_MULTIPLE_CELLS_SS_PBCH_IN_A_CARRIER_TAG,
+             &(pNfapiMsg->ssb_table.multiple_cells_ss_pbch_in_a_carrier), ppWritePackedMsg, end, &pack_uint8_tlv_value);
+    numTLVs++;
+  }
   // END SSB Table
   // START TDD Table
-
-  pack_tlv(NFAPI_NR_CONFIG_TDD_PERIOD_TAG, &(pNfapiMsg->tdd_table.tdd_period), ppWritePackedMsg, end,
-           &pack_uint8_tlv_value);
-  numTLVs++;*/
+ if(pNfapiMsg->tdd_table.tdd_period.tl.tag != 0){
+   pack_tlv(NFAPI_NR_CONFIG_TDD_PERIOD_TAG, &(pNfapiMsg->tdd_table.tdd_period), ppWritePackedMsg, end,
+            &pack_uint8_tlv_value);
+   numTLVs++;
+ }
   if (NFAPI_MODE != NFAPI_MODE_AERIAL) {
     for (int i = 0; i < 40; i++) {
       for (int k = 0; k < 14; k++) {
@@ -963,11 +946,10 @@ static uint8_t pack_nr_config_request(void *msg, uint8_t **ppWritePackedMsg, uin
   }
   // END TDD Table
   // START Measurement Config
-/* was unused */
-  pNfapiMsg->measurement_config.rssi_measurement.tl.tag = NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG;
-  pNfapiMsg->measurement_config.rssi_measurement.value = 0;
-pack_tlv(NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG, &(pNfapiMsg->measurement_config.rssi_measurement), ppWritePackedMsg, end, &pack_uint8_tlv_value);
+if(pNfapiMsg->measurement_config.rssi_measurement.tl.tag != 0){
+  pack_tlv(NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG, &(pNfapiMsg->measurement_config.rssi_measurement), ppWritePackedMsg, end, &pack_uint8_tlv_value);
   numTLVs++;
+}
  // END Measurement Config
   // START Digital Beam Table (DBT) PDU
   // Struct in nfapi/open-nFAPI/nfapi/public_inc/nfapi_nr_interface_scf.h nfapi_nr_dbt_pdu_t, currently unused
@@ -1006,18 +988,7 @@ pack_tlv(NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG, &(pNfapiMsg->measurement_config.r
     }
   }
   pNfapiMsg->num_tlv = numTLVs;
-  printf("numTLVs = %d\n",numTLVs);
   return (push8(numTLVs, &pNumTLVFields, end));// Number of messages
-  //pack_tlv(NFAPI_NR_NFAPI_P7_PNF_ADDRESS_IPV4_TAG, &(pNfapiMsg->nfapi_config.p7_pnf_address_ipv4), ppWritePackedMsg, end, &pack_ipv4_address_value) ;
-  //numTLVs++;
-  //pack_tlv(NFAPI_NR_NFAPI_P7_PNF_ADDRESS_IPV6_TAG, &(pNfapiMsg->nfapi_config.p7_pnf_address_ipv6), ppWritePackedMsg, end, &pack_ipv6_address_value) ;
-  //numTLVs++;
-  //pack_tlv(NFAPI_NR_NFAPI_P7_PNF_PORT_TAG, &(pNfapiMsg->nfapi_config.p7_pnf_port), ppWritePackedMsg, end, &pack_uint16_tlv_value) ;
-  //numTLVs++;
-  //   pack_tlv(NFAPI_NR_NFAPI_RF_BANDS_TAG, &(pNfapiMsg->nfapi_config.rf_bands), ppWritePackedMsg, end, &pack_rf_bands_value) &&
-  //   numTLVs++;
-  //   pack_tlv(NFAPI_NR_NFAPI_UPLINK_UES_PER_SUBFRAME_TAG, &(pNfapiMsg->nfapi_config.ul_ue_per_sf), ppWritePackedMsg, end, &pack_uint8_tlv_value) &&
-  //   numTLVs++;
 }
 
 static uint8_t pack_nr_config_response(void *msg, uint8_t **ppWritePackedMsg, uint8_t *end, nfapi_p4_p5_codec_config_t *config) {
@@ -1312,31 +1283,25 @@ int fapi_nr_p5_message_pack(void *pMessageBuf, uint32_t messageBufLen, void *pPa
   // PHY API Message structure
   push16(pMessageHeader->message_id, &pWritePackedMessage, pPackMessageEnd); // Message type ID
 
-  if(1==1) {
-    // check for a valid message length
-    packedMsgLen = get_packed_msg_len((uintptr_t)pPacketBodyFieldStart, (uintptr_t)pPacketBodyField);
-    packedMsgLen-=1;
-    if(pMessageHeader->message_id == NFAPI_NR_PHY_MSG_TYPE_START_REQUEST){
-      //START.request doesn't have a body, length is 0
-      packedMsgLen = 0;
-    }else if (packedMsgLen > 0xFFFF || packedMsgLen > packedBufLen) {
-      NFAPI_TRACE(NFAPI_TRACE_ERROR, "Packed message 0x%02x length error %d, buffer supplied %d\n",pMessageHeader->message_id, packedMsgLen, packedBufLen);
-      return -1;
-    } else {
-
-    }
-
-    // Update the message length in the header
-    if(!push32(packedMsgLen, &pPackedLengthField, pPackMessageEnd))
-      return -1;
-
-    // return the packed length
-    return (packedMsgLen);
-  } else {
-    // Failed to pack the meassage
-    NFAPI_TRACE(NFAPI_TRACE_ERROR, "P5 Failed to pack message\n");
+  // check for a valid message length
+  packedMsgLen = get_packed_msg_len((uintptr_t)pPacketBodyFieldStart, (uintptr_t)pPacketBodyField);
+  packedMsgLen-=1;
+  if(pMessageHeader->message_id == NFAPI_NR_PHY_MSG_TYPE_START_REQUEST){
+    //START.request doesn't have a body, length is 0
+    packedMsgLen = 0;
+  }else if (packedMsgLen > 0xFFFF || packedMsgLen > packedBufLen) {
+    NFAPI_TRACE(NFAPI_TRACE_ERROR, "Packed message 0x%02x length error %d, buffer supplied %d\n",pMessageHeader->message_id, packedMsgLen, packedBufLen);
     return -1;
+  } else {
+
   }
+
+  // Update the message length in the header
+  if(!push32(packedMsgLen, &pPackedLengthField, pPackMessageEnd))
+    return -1;
+
+  // return the packed length
+  return ((int)packedMsgLen);
 
 }
 
@@ -1897,7 +1862,7 @@ static uint8_t unpack_nr_param_response(uint8_t **ppReadPackedMsg, uint8_t *end,
   printf("\n Read message unpack_param_response: \n");
 
   while(ptr < end) {
-    printf(" %0x%02x \n", *ptr);
+    printf(" 0x%02x \n", *ptr);
     ptr++;
   }
 

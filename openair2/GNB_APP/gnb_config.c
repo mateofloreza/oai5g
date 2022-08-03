@@ -815,7 +815,7 @@ void RCconfig_nr_macrlc() {
     char *ulprbbl = *GNBParamList.paramarray[0][GNB_ULPRBBLACKLIST_IDX].strptr;
     char *save = NULL;
     char *pt = strtok(ulprbbl, ",");
-    int prb;
+
     memset(prbbl, 0, 275 * sizeof(int));
     while (pt) {
       const int prb = atoi(pt);

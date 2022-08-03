@@ -1259,12 +1259,9 @@ int vnf_nr_pack_and_send_p5_message(vnf_t *vnf, uint16_t p5_idx, nfapi_p4_p5_mes
 
   if (pnf) {
     int packedMessageLength = -1;
-    ///create two messages, one FAPI (aerial) and one nFAPI (OAI PNF)
-    // pack the message for transmission
-
-
     if (NFAPI_MODE == NFAPI_MODE_AERIAL) {
-      // In case it is a FAPI message, create 2 messages, one with nFAPI header for OAI PNF and one with no nFAPI header for Aerial L1
+#if 0
+// In case it is a FAPI message, create 2 messages, one with nFAPI header for OAI PNF and one with no nFAPI header for Aerial L1
       //printf("TO SEND FAPI MESSAGE\n");
       //copy message
       nfapi_p4_p5_message_header_t *msgFAPI = calloc(1, msg_len);
@@ -1274,11 +1271,8 @@ int vnf_nr_pack_and_send_p5_message(vnf_t *vnf, uint16_t p5_idx, nfapi_p4_p5_mes
       //memcpy(&codec_configFAPI,&vnf->_public.codec_config, sizeof(nfapi_p4_p5_codec_config_t));
       //create FAPI tx_buffer
       uint8_t tx_messagebufferFAPI[sizeof(vnf->tx_message_buffer)];
-      int packedMessageLengthFAPI = -1;
-      packedMessageLengthFAPI = fapi_nr_p5_message_pack(msgFAPI, msg_len, tx_messagebufferFAPI,
-                                                        sizeof(tx_messagebufferFAPI), &vnf->_public.codec_config);
+      int packedMessageLengthFAPI = fapi_nr_p5_message_pack(msgFAPI, msg_len, tx_messagebufferFAPI, sizeof(tx_messagebufferFAPI), &vnf->_public.codec_config);
       //printf(" msg id : 0x%02x length: %d\n", msg->message_id, packedMessageLengthFAPI);
-#if 0
       return test_nv_ipc_send_msg_P5(tx_messagebufferFAPI, packedMessageLengthFAPI, msg);
 #endif
     } else {
@@ -1301,6 +1295,7 @@ int vnf_nr_pack_and_send_p5_message(vnf_t *vnf, uint16_t p5_idx, nfapi_p4_p5_mes
     NFAPI_TRACE(NFAPI_TRACE_INFO, "%s() cannot find pnf info for p5_idx:%d\n", __FUNCTION__, p5_idx);
     return -1;
   }
+  return -1;
 }
 
 

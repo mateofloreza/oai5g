@@ -229,6 +229,7 @@ static uint8_t pack_dl_tti_csi_rs_pdu_rel15_value(void *tlv, uint8_t **ppWritePa
         }
     }
        */
+    return 1;
 }
 
 
@@ -904,25 +905,22 @@ static uint8_t pack_dl_tti_request(void *msg, uint8_t **ppWritePackedMsg, uint8_
     return 0;
   }
 
-    for(int i=0;i<pNfapiMsg->dl_tti_request_body.nPDUs;i++)
+  for(int i=0;i<pNfapiMsg->dl_tti_request_body.nPDUs;i++)
+  {
+    if(!pack_dl_tti_request_body_value(&pNfapiMsg->dl_tti_request_body.dl_tti_pdu_list[i],ppWritePackedMsg,end))
+      return 0;
+  }
+
+
+  for(int i=0;i<pNfapiMsg->dl_tti_request_body.nGroup;i++)
+  {
+    push8(pNfapiMsg->dl_tti_request_body.nUe[i],ppWritePackedMsg,end);
+    for(int j=0;j<pNfapiMsg->dl_tti_request_body.nUe[i];j++)
     {
-        if(!pack_dl_tti_request_body_value(&pNfapiMsg->dl_tti_request_body.dl_tti_pdu_list[i],ppWritePackedMsg,end))
-            return 0;
+      if(!(push32(pNfapiMsg->dl_tti_request_body.PduIdx[i][j],ppWritePackedMsg,end))){
+        return 0;
+      }
     }
-
-
-	int arr[12];
-	for(int i=0;i<pNfapiMsg->dl_tti_request_body.nGroup;i++)
-	{
-		push8(pNfapiMsg->dl_tti_request_body.nUe[i],ppWritePackedMsg,end);
-        for(int j=0;j<pNfapiMsg->dl_tti_request_body.nUe[i];j++)
-		{
-			//arr[j] = pNfapiMsg->dl_tti_request_body.PduIdx[i][j];
-            if(!(push32(pNfapiMsg->dl_tti_request_body.PduIdx[i][j],ppWritePackedMsg,end))){
-                return 0;
-            }
-		}
-		//if(!(pusharrays32(arr, 12, pNfapiMsg->dl_tti_request_body.nUe[i], ppWritePackedMsg, end)))
 		return 0;
 	}
 
@@ -6055,7 +6053,7 @@ static uint8_t unpack_nr_rach_indication_body(nfapi_nr_prach_indication_pdu_t* v
 
       retval = pull8(ppReadPackedMsg, &preamble->preamble_index, end);
       retval = pull16(ppReadPackedMsg, &preamble->timing_advance, end);
-      uint8_t *pIn = *ppReadPackedMsg;
+
       retval =pull32(ppReadPackedMsg, &preamble->preamble_pwr, end);
       if(!(retval))
         return 0;
