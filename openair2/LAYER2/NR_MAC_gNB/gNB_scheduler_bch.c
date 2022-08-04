@@ -395,7 +395,7 @@ uint32_t schedule_control_sib1(module_id_t module_id,
     if(rbSize < bwpSize && !(vrb_map[rbStart + rbSize]&SL_to_bitmap(startSymbolIndex, nrOfSymbols)))
       rbSize++;
     else{
-      if (gNB_mac->sched_ctrlCommon->sched_pdsch.mcs<10)
+      if (gNB_mac->sched_ctrlCommon->sched_pdsch.mcs<17)
         gNB_mac->sched_ctrlCommon->sched_pdsch.mcs++;
       else
         break;
@@ -405,8 +405,8 @@ uint32_t schedule_control_sib1(module_id_t module_id,
                          rbSize, nrOfSymbols, N_PRB_DMRS * dmrs_length,0, 0,1) >> 3;
   } while (TBS < gNB_mac->sched_ctrlCommon->num_total_bytes);
 
-  AssertFatal(TBS>=gNB_mac->sched_ctrlCommon->num_total_bytes,"Couldn't allocate enough resources for %d bytes in SIB1 PDSCH\n",
-              gNB_mac->sched_ctrlCommon->num_total_bytes);
+  AssertFatal(TBS>=gNB_mac->sched_ctrlCommon->num_total_bytes,"Couldn't allocate enough resources for %d bytes in SIB1 PDSCH (rbStart %d, rbSize %d, bwpSize %d, startSymbolIndex %d, nrOfSymbols %d, mcs %d, TBS %d)\n",
+              gNB_mac->sched_ctrlCommon->num_total_bytes, rbStart, rbSize, bwpSize, startSymbolIndex, nrOfSymbols, gNB_mac->sched_ctrlCommon->sched_pdsch.mcs, TBS);
 
   gNB_mac->sched_ctrlCommon->sched_pdsch.rbSize = rbSize;
   gNB_mac->sched_ctrlCommon->sched_pdsch.rbStart = 0;
