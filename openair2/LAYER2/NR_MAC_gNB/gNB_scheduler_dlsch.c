@@ -388,8 +388,8 @@ bool allocate_dl_retransmission(module_id_t module_id,
   gNB_MAC_INST *nr_mac = RC.nrmac[module_id];
   const NR_ServingCellConfigCommon_t *scc = nr_mac->common_channels->ServingCellConfigCommon;
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
-  NR_UE_DL_BWP_t *BWP = &UE->current_DL_BWP;
-  NR_UE_UL_BWP_t *UBWP = &UE->current_UL_BWP;
+  NR_UE_DL_BWP_t *dl_bwp = &UE->current_DL_BWP;
+  NR_UE_UL_BWP_t *ul_bwp = &UE->current_UL_BWP;
   NR_sched_pdsch_t *retInfo = &sched_ctrl->harq_processes[current_harq_pid].sched_pdsch;
   NR_sched_pdsch_t *curInfo = &sched_ctrl->sched_pdsch;
 
@@ -400,7 +400,7 @@ bool allocate_dl_retransmission(module_id_t module_id,
   int pm_index = (curInfo->nrOfLayers < retInfo->nrOfLayers) ? curInfo->pm_index : retInfo->pm_index;
 
   const int coresetid = sched_ctrl->coreset->controlResourceSetId;
-  const uint16_t bwpSize = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_size : BWP->BWPSize;
+  const uint16_t bwpSize = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_size : dl_bwp->BWPSize;
 
   int rbStart = 0; // start wrt BWPstart
   int rbSize = 0;
@@ -434,11 +434,11 @@ bool allocate_dl_retransmission(module_id_t module_id,
     /* the retransmission will use a different time domain allocation, check
      * that we have enough resources */
     NR_pdsch_tda_info_t temp_tda;
-    nr_get_pdsch_tda_info(BWP, tda, &temp_tda);
+    nr_get_pdsch_tda_info(dl_bwp, tda, &temp_tda);
     NR_pdsch_dmrs_t temp_dmrs;
     set_dl_dmrs_params(&temp_dmrs,
                        scc,
-                       BWP,
+                       dl_bwp,
                        &temp_tda,
                        layers);
 
@@ -510,7 +510,7 @@ bool allocate_dl_retransmission(module_id_t module_id,
   /* Find PUCCH occasion: if it fails, undo CCE allocation (undoing PUCCH
    * allocation after CCE alloc fail would be more complex) */
 
-  int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, UBWP->pucch_Config, CCEIndex);
+  int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, ul_bwp->pucch_Config, CCEIndex);
   const int alloc = nr_acknack_scheduling(module_id, UE, frame, slot, r_pucch, 0);
   if (alloc<0) {
     LOG_D(MAC,
@@ -570,7 +570,7 @@ void pf_dl(module_id_t module_id,
       continue;
 
     NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
-    NR_UE_DL_BWP_t *BWP = &UE->current_DL_BWP;
+    NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
 
     if (sched_ctrl->ul_failure==1 && get_softmodem_params()->phy_test==0) continue;
 
@@ -608,16 +608,19 @@ void pf_dl(module_id_t module_id,
 
       /* Calculate coeff */
       const NR_bler_options_t *bo = &mac->dl_bler;
-      const int max_mcs_table = BWP->mcsTableIdx == 1 ? 27 : 28;
+      const int max_mcs_table = current_BWP->mcsTableIdx == 1 ? 27 : 28;
       const int max_mcs = min(sched_ctrl->dl_max_mcs, max_mcs_table);
-      sched_pdsch->mcs = get_mcs_from_bler(bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
-      sched_pdsch->nrOfLayers = get_dl_nrOfLayers(sched_ctrl, BWP->dci_format);
+      if (bo->harq_round_max == 1)
+        sched_pdsch->mcs = max_mcs;
+      else
+        sched_pdsch->mcs = get_mcs_from_bler(bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
+      sched_pdsch->nrOfLayers = get_dl_nrOfLayers(sched_ctrl, current_BWP->dci_format);
       sched_pdsch->pm_index = set_pm_index(UE,
                                            sched_ctrl,
                                            sched_pdsch->nrOfLayers,
                                            mac->xp_pdsch_antenna_ports);
-      const uint8_t Qm = nr_get_Qm_dl(sched_pdsch->mcs, BWP->mcsTableIdx);
-      const uint16_t R = nr_get_code_rate_dl(sched_pdsch->mcs, BWP->mcsTableIdx);
+      const uint8_t Qm = nr_get_Qm_dl(sched_pdsch->mcs, current_BWP->mcsTableIdx);
+      const uint16_t R = nr_get_code_rate_dl(sched_pdsch->mcs, current_BWP->mcsTableIdx);
       uint32_t tbs = nr_compute_tbs(Qm,
                                     R,
                                     1, /* rbSize */
@@ -647,13 +650,13 @@ void pf_dl(module_id_t module_id,
     NR_UE_sched_ctrl_t *sched_ctrl = &iterator->UE->UE_sched_ctrl;
     const uint16_t rnti = iterator->UE->rnti;
 
-    NR_UE_DL_BWP_t *BWP = &iterator->UE->current_DL_BWP;
-    NR_UE_UL_BWP_t *UBWP = &iterator->UE->current_UL_BWP;
+    NR_UE_DL_BWP_t *dl_bwp = &iterator->UE->current_DL_BWP;
+    NR_UE_UL_BWP_t *ul_bwp = &iterator->UE->current_UL_BWP;
 
     const int coresetid = sched_ctrl->coreset->controlResourceSetId;
     const uint16_t bwpSize = coresetid == 0 ?
       RC.nrmac[module_id]->cset0_bwp_size :
-      BWP->BWPSize;
+      dl_bwp->BWPSize;
     int rbStart = 0; // start wrt BWPstart
 
     if (sched_ctrl->available_dl_harq.head < 0) {
@@ -693,7 +696,7 @@ void pf_dl(module_id_t module_id,
     /* Find PUCCH occasion: if it fails, undo CCE allocation (undoing PUCCH
     * allocation after CCE alloc fail would be more complex) */
 
-    int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, UBWP->pucch_Config, CCEIndex);
+    int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, ul_bwp->pucch_Config, CCEIndex);
     const int alloc = nr_acknack_scheduling(module_id, iterator->UE, frame, slot, r_pucch, 0);
 
     if (alloc<0) {
@@ -719,7 +722,7 @@ void pf_dl(module_id_t module_id,
     AssertFatal(sched_pdsch->time_domain_allocation>=0,"Unable to find PDSCH time domain allocation in list\n");
     NR_pdsch_tda_info_t *tda_info = &sched_pdsch->tda_info;
 
-    nr_get_pdsch_tda_info(BWP, sched_pdsch->time_domain_allocation, tda_info);
+    nr_get_pdsch_tda_info(dl_bwp, sched_pdsch->time_domain_allocation, tda_info);
 
     const uint16_t slbitmap = SL_to_bitmap(tda_info->startSymbolIndex, tda_info->nrOfSymbols);
 
@@ -734,11 +737,11 @@ void pf_dl(module_id_t module_id,
 
     set_dl_dmrs_params(&sched_pdsch->dmrs_parms,
                        scc,
-                       BWP,
+                       dl_bwp,
                        tda_info,
                        sched_pdsch->nrOfLayers);
-    sched_pdsch->Qm = nr_get_Qm_dl(sched_pdsch->mcs, BWP->mcsTableIdx);
-    sched_pdsch->R = nr_get_code_rate_dl(sched_pdsch->mcs, BWP->mcsTableIdx);
+    sched_pdsch->Qm = nr_get_Qm_dl(sched_pdsch->mcs, dl_bwp->mcsTableIdx);
+    sched_pdsch->R = nr_get_code_rate_dl(sched_pdsch->mcs, dl_bwp->mcsTableIdx);
     sched_pdsch->pucch_allocation = alloc;
     uint32_t TBS = 0;
     uint16_t rbSize;
@@ -784,18 +787,18 @@ void nr_fr1_dlsch_preprocessor(module_id_t module_id, frame_t frame, sub_frame_t
   /* This is temporary and it assumes all UEs have the same BWP and TDA*/
   NR_UE_info_t *UE=UE_info->list[0];
   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
-  NR_UE_DL_BWP_t *BWP = &UE->current_DL_BWP;
+  NR_UE_DL_BWP_t *current_BWP = &UE->current_DL_BWP;
   const int tda = get_dl_tda(RC.nrmac[module_id], scc, slot);
   int startSymbolIndex, nrOfSymbols;
-  const struct NR_PDSCH_TimeDomainResourceAllocationList *tdaList = BWP->tdaList;
+  const struct NR_PDSCH_TimeDomainResourceAllocationList *tdaList = current_BWP->tdaList;
   AssertFatal(tda < tdaList->list.count, "time_domain_allocation %d>=%d\n", tda, tdaList->list.count);
   const int startSymbolAndLength = tdaList->list.array[tda]->startSymbolAndLength;
   SLIV2SL(startSymbolAndLength, &startSymbolIndex, &nrOfSymbols);
 
   const int coresetid = sched_ctrl->coreset->controlResourceSetId;
 
-  const uint16_t bwpSize = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_size : BWP->BWPSize;
-  const uint16_t BWPStart = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_start : BWP->BWPStart;
+  const uint16_t bwpSize = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_size : current_BWP->BWPSize;
+  const uint16_t BWPStart = coresetid == 0 ? RC.nrmac[module_id]->cset0_bwp_start : current_BWP->BWPStart;
 
   const uint16_t slbitmap = SL_to_bitmap(startSymbolIndex, nrOfSymbols);
   uint16_t *vrb_map = RC.nrmac[module_id]->common_channels[CC_id].vrb_map;
@@ -860,8 +863,6 @@ void nr_schedule_ue_spec(module_id_t module_id,
 
   if (!is_xlsch_in_slot(gNB_mac->dlsch_slot_bitmap[slot / 64], slot))
     return;
-
-  //if (slot==7 || slot == 17) return;
 
   /* PREPROCESSOR */
   gNB_mac->pre_processor_dl(module_id, frame, slot);
@@ -945,7 +946,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
           TBS,
           current_harq_pid,
           harq->round,
-          nr_rv_round_map[harq->round],
+          nr_rv_round_map[harq->round%4],
           harq->ndi,
           pucch->timing_indicator,
           pucch->frame,
@@ -1005,8 +1006,8 @@ void nr_schedule_ue_spec(module_id_t module_id,
     pdsch_pdu->mcsIndex[0] = sched_pdsch->mcs;
     pdsch_pdu->mcsTable[0] = current_BWP->mcsTableIdx;
     AssertFatal(harq!=NULL,"harq is null\n");
-    AssertFatal(harq->round<4,"%d",harq->round);
-    pdsch_pdu->rvIndex[0] = nr_rv_round_map[harq->round];
+    AssertFatal(harq->round<gNB_mac->dl_bler.harq_round_max,"%d",harq->round);
+    pdsch_pdu->rvIndex[0] = nr_rv_round_map[harq->round%4];
     pdsch_pdu->TBSize[0] = TBS;
     pdsch_pdu->dataScramblingId = *scc->physCellId;
     pdsch_pdu->nrOfLayers = nrOfLayers;
@@ -1220,7 +1221,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
                   lcid < 4 ? "DCCH" : "DTCH",
                   lcid,
                   ndata,
-                  bufEnd-buf-+sizeof(NR_MAC_SUBHEADER_LONG));
+                  bufEnd-buf-sizeof(NR_MAC_SUBHEADER_LONG));
 
             if (len == 0)
               break;
@@ -1251,6 +1252,8 @@ void nr_schedule_ue_spec(module_id_t module_id,
           header->L = htons(bufEnd-buf);
           dlsch_total_bytes += bufEnd-buf;
 
+          for (; ((intptr_t)buf) % 4; buf++)
+            *buf = lrand48() & 0xff;
           for (; buf < bufEnd - 3; buf += 4) {
             uint32_t *buf32 = (uint32_t *)buf;
             *buf32 = lrand48();

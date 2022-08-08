@@ -38,8 +38,6 @@ void set_cset_offset(uint16_t);
 
 void mac_top_init_gNB(void);
 
-void process_CellGroup(NR_CellGroupConfig_t *CellGroup, NR_UE_sched_ctrl_t *sched_ctrl);
-
 void config_common(int Mod_idP,
                    int pdsch_AntennaPorts,
                    int pusch_AntennaPorts,
@@ -92,7 +90,7 @@ uint32_t schedule_control_sib1(module_id_t module_id,
                                NR_pdsch_dmrs_t *dmrs_parms,
                                NR_pdsch_tda_info_t *tda_info,
                                uint8_t candidate_idx,
-                               int num_total_bytes);
+                               uint16_t num_total_bytes);
 
 /* \brief default FR1 DL preprocessor init routine, returns preprocessor to call */
 nr_pp_impl_dl nr_init_fr1_dlsch_preprocessor(module_id_t module_id, int CC_id);
@@ -193,9 +191,9 @@ void config_uldci(const NR_SIB1_t *sib1,
                   dci_pdu_rel15_t *dci_pdu_rel15,
                   int time_domain_assignment,
                   uint8_t tpc,
-                  NR_UE_UL_BWP_t *BWP);
+                  NR_UE_UL_BWP_t *ul_bwp);
 
-void nr_schedule_pucch(gNB_MAC_INST* nrmac,
+void nr_schedule_pucch(gNB_MAC_INST *nrmac,
                        frame_t frameP,
                        sub_frame_t slotP);
 
@@ -210,12 +208,12 @@ void nr_csi_meas_reporting(int Mod_idP,
                            frame_t frameP,
                            sub_frame_t slotP);
 
-int nr_acknack_scheduling( int Mod_idP,
-			   NR_UE_info_t * UE,
-                           frame_t frameP,
-                           sub_frame_t slotP,
-                           int r_pucch,
-                           int do_common);
+int nr_acknack_scheduling(int Mod_idP,
+                          NR_UE_info_t *UE,
+                          frame_t frameP,
+                          sub_frame_t slotP,
+                          int r_pucch,
+                          int do_common);
 
 void get_pdsch_to_harq_feedback(NR_PUCCH_Config_t *pucch_Config,
                                 nr_dci_format_t dci_format,
@@ -286,7 +284,7 @@ void fill_pdcch_vrb_map(gNB_MAC_INST *mac,
 
 void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
                         const NR_CellGroupConfig_t *CellGroup,
-                        const NR_UE_DL_BWP_t *BWP,
+                        const NR_UE_DL_BWP_t *dl_bwp,
                         nfapi_nr_dl_dci_pdu_t *pdcch_dci_pdu,
                         dci_pdu_rel15_t *dci_pdu_rel15,
                         int dci_formats,
@@ -297,7 +295,7 @@ void fill_dci_pdu_rel15(const NR_ServingCellConfigCommon_t *scc,
                         uint16_t cset0_bwp_size);
 
 void prepare_dci(const NR_CellGroupConfig_t *CellGroup,
-                 const NR_UE_DL_BWP_t *BWP,
+                 const NR_UE_DL_BWP_t *dl_bwp,
                  const NR_ControlResourceSet_t *coreset,
                  dci_pdu_rel15_t *dci_pdu_rel15,
                  nr_dci_format_t format);
@@ -326,17 +324,17 @@ long get_K2(NR_PUSCH_TimeDomainResourceAllocationList_t *tdaList,
             int time_domain_assignment,
             int mu);
 
-void nr_get_pdsch_tda_info(const NR_UE_DL_BWP_t *BWP,
+void nr_get_pdsch_tda_info(const NR_UE_DL_BWP_t *dl_bwp,
                            int tda,
                            NR_pdsch_tda_info_t *tda_info);
 
-void nr_get_pusch_tda_info(const NR_UE_UL_BWP_t *BWP,
+void nr_get_pusch_tda_info(const NR_UE_UL_BWP_t *ul_bwp,
                            int tda,
                            NR_pusch_tda_info_t *tda_info);
 
 void set_ul_dmrs_params(NR_pusch_dmrs_t *dmrs,
                         const NR_ServingCellConfigCommon_t *scc,
-                        NR_UE_UL_BWP_t *BWP,
+                        NR_UE_UL_BWP_t *ul_bwp,
                         NR_pusch_tda_info_t *tda_info,
                         int Layers);
 
@@ -384,8 +382,6 @@ void mac_remove_nr_ue(gNB_MAC_INST *nr_mac, rnti_t rnti);
 void nr_mac_remove_ra_rnti(module_id_t mod_id, rnti_t rnti);
 
 int nr_get_default_pucch_res(int pucch_ResourceCommon);
-
-void compute_csi_bitlen(NR_CSI_MeasConfig_t *csi_MeasConfig, NR_UE_info_t *UE);
 
 int get_dlscs(nfapi_nr_config_request_t *cfg);
 
