@@ -1181,14 +1181,10 @@ void handle_nr_srs_measurements(const module_id_t module_id,
       NR_UE_UL_BWP_t *current_BWP = &UE->current_UL_BWP;
       NR_pusch_semi_static_t *ps = &sched_ctrl->pusch_semi_static;
       ps->srs_feedback.sri = NR_SRS_SRI_0;
-      ps->srs_feedback.ul_ri = 0;
 
-      // TODO: For testing, we are assuming the maximum value of ul_ri. In a next commit, the ul_ri will be computed.
-      if (nr_srs_normalized_channel_iq_matrix.num_gnb_antenna_elements == 2 &&
-          nr_srs_normalized_channel_iq_matrix.num_ue_srs_ports == 2 &&
-          current_BWP->pusch_Config && *current_BWP->pusch_Config->maxRank == 2) {
-        ps->srs_feedback.ul_ri = 1;
-      }
+      nr_srs_ri_computation(&nr_srs_normalized_channel_iq_matrix,
+                            current_BWP,
+                            &ps->srs_feedback.ul_ri);
 
       ps->srs_feedback.tpmi = nr_srs_tpmi_estimation(current_BWP->pusch_Config,
                                                      current_BWP->transform_precoding,
