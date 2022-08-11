@@ -1339,7 +1339,7 @@ static bool allocate_ul_retransmission(gNB_MAC_INST *nrmac,
     uint16_t new_rbSize;
     bool success = nr_find_nb_rb(retInfo->Qm,
                                  retInfo->R,
-                                 1, // layers
+                                 nrOfLayers,
                                  temp_ps.nrOfSymbols,
                                  temp_ps.N_PRB_DMRS * temp_ps.num_dmrs_symb,
                                  retInfo->tb_size,
@@ -1602,8 +1602,7 @@ void pf_ul(module_id_t module_id,
                                             ps->N_PRB_DMRS * ps->num_dmrs_symb,
                                             0, // nb_rb_oh
                                             0,
-                                            ps->nrOfLayers)
-                             >> 3;
+                                            ps->nrOfLayers) >> 3;
 
       /* Mark the corresponding RBs as used */
       n_rb_sched -= sched_pusch->rbSize;
@@ -1704,7 +1703,7 @@ void pf_ul(module_id_t module_id,
 
     nr_find_nb_rb(sched_pusch->Qm,
                   sched_pusch->R,
-                  1, // layers
+                  nrOfLayers,
                   ps->nrOfSymbols,
                   ps->N_PRB_DMRS * ps->num_dmrs_symb,
                   B,

@@ -479,9 +479,9 @@ int nr_rate_matching_ldpc_rx(uint32_t Tbslbrm,
                              uint8_t rvidx,
                              uint8_t clear,
                              uint32_t E,
-			     uint32_t F,
-			     uint32_t Foffset)
-{
+                             uint32_t F,
+                             uint32_t Foffset) {
+
   uint32_t Ncb,ind,k,Nref,N;
 
 #ifdef RM_DEBUG
