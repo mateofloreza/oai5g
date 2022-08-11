@@ -403,6 +403,9 @@ def GetParametersFromXML(action):
 		string_field = test.findtext('yaml_path')
 		if (string_field is not None):
 			CONTAINERS.yamlPath[CONTAINERS.eNB_instance] = string_field
+		string_field = test.findtext('services')
+		if string_field is not None:
+			CONTAINERS.services[CONTAINERS.eNB_instance] = string_field
 
 	elif action == 'DeployGenObject' or action == 'UndeployGenObject' or action == 'StatsFromGenObject':
 		string_field=test.findtext('yaml_path')

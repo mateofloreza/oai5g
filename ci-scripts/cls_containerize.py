@@ -634,10 +634,14 @@ class Containerize():
 		# Currently support only one
 		mySSH.command('echo ' + lPassWord + ' | sudo -S b2xx_fx3_utils --reset-device', '\$', 15)
 		mySSH.command('docker-compose --file ci-docker-compose.yml config --services | sed -e "s@^@service=@" 2>&1', '\$', 10)
-		result = re.search('service=(?P<svc_name>[a-zA-Z0-9\_]+)', mySSH.getBefore())
-		if result is not None:
+		svcName = self.services[self.eNB_instance]
+		if svcName == '':
+			result = re.search('service=(?P<svc_name>[a-zA-Z0-9\_]+)', mySSH.getBefore())
+			if result is None:
+				logging.error('could not locate service name!')
 			svcName = result.group('svc_name')
-			mySSH.command('docker-compose --file ci-docker-compose.yml up -d ' + svcName, '\$', 10)
+
+		mySSH.command('docker-compose --file ci-docker-compose.yml up -d ' + svcName, '\$', 10)
 
 		# Checking Status
 		mySSH.command('docker-compose --file ci-docker-compose.yml config', '\$', 5)
