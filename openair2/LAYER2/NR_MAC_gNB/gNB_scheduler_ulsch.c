@@ -976,16 +976,23 @@ void get_precoder_matrix_coef(char *w,
                               const uint16_t num_ue_srs_ports,
                               const uint8_t transform_precoding,
                               const uint8_t tpmi,
-                              const uint8_t uI) {
+                              const uint8_t uI,
+                              int layer_idx) {
   if (ul_ri == 0) {
     if (num_ue_srs_ports == 2) {
-      *w = *table_38211_6_3_1_5_1[tpmi][uI];
+      *w = table_38211_6_3_1_5_1[tpmi][uI][layer_idx];
     } else {
       if (transform_precoding == NR_PUSCH_Config__transformPrecoder_enabled) {
-        *w = *table_38211_6_3_1_5_2[tpmi][uI];
+        *w = table_38211_6_3_1_5_2[tpmi][uI][layer_idx];
       } else {
-        *w = *table_38211_6_3_1_5_3[tpmi][uI];
+        *w = table_38211_6_3_1_5_3[tpmi][uI][layer_idx];
       }
+    }
+  } else if (ul_ri == 1) {
+    if (num_ue_srs_ports == 2) {
+      *w = table_38211_6_3_1_5_4[tpmi][uI][layer_idx];
+    } else {
+      *w = table_38211_6_3_1_5_5[tpmi][uI][layer_idx];
     }
   } else {
     AssertFatal(1==0,"Function get_precoder_matrix_coef() does not support %i layers yet!\n", ul_ri+1);
@@ -1002,7 +1009,7 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
                            const uint16_t num_prgs,
                            const uint8_t ul_ri) {
 
-  if (ul_ri > 0) {
+  if (ul_ri > 1) {
     LOG_D(NR_MAC, "TPMI computation for ul_ri %i is not implemented yet!\n", ul_ri);
     return 0;
   }
@@ -1043,23 +1050,25 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
         precoded_channel_matrix_im[index_gI_pI] = 0;
 
         for(int uI = 0; uI < num_ue_srs_ports; uI++) {
+          for(int layer_idx = 0; layer_idx < nrOfLayers; layer_idx++) {
 
-          uint16_t index = uI*num_gnb_antenna_elements*num_prgs + index_gI_pI;
-          get_precoder_matrix_coef(&w, ul_ri, num_ue_srs_ports, transform_precoding, tpmi, uI);
-          c16_t h_times_w = nr_h_times_w(channel_matrix16[index], w);
+            uint16_t index = uI*num_gnb_antenna_elements*num_prgs + index_gI_pI;
+            get_precoder_matrix_coef(&w, ul_ri, num_ue_srs_ports, transform_precoding, tpmi, uI, layer_idx);
+            c16_t h_times_w = nr_h_times_w(channel_matrix16[index], w);
 
-          precoded_channel_matrix_re[index_gI_pI] += h_times_w.r;
-          precoded_channel_matrix_im[index_gI_pI] += h_times_w.i;
+            precoded_channel_matrix_re[index_gI_pI] += h_times_w.r;
+            precoded_channel_matrix_im[index_gI_pI] += h_times_w.i;
 
 #ifdef SRS_IND_DEBUG
-          LOG_I(NR_MAC, "(uI %i, gI %i, pI %i) channel_matrix --> real %i, imag %i\n",
-                uI, gI, pI, channel_matrix16[index].r, channel_matrix16[index].i);
+            LOG_I(NR_MAC, "(pI %i, gI %i,  uI %i, layer_idx %i) w = %c, channel_matrix --> real %i, imag %i\n",
+                  pI, gI,  uI, layer_idx, w, channel_matrix16[index].r, channel_matrix16[index].i);
 #endif
+          }
         }
 
 #ifdef SRS_IND_DEBUG
-        LOG_I(NR_MAC, "(gI %i, pI %i) precoded_channel_coef --> real %i, imag %i\n",
-              gI, pI, precoded_channel_matrix_re[index_gI_pI], precoded_channel_matrix_im[index_gI_pI]);
+        LOG_I(NR_MAC, "(pI %i, gI %i) precoded_channel_coef --> real %i, imag %i\n",
+              pI, gI, precoded_channel_matrix_re[index_gI_pI], precoded_channel_matrix_im[index_gI_pI]);
 #endif
       }
     }
