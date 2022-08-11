@@ -1008,6 +1008,7 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
   }
 
   uint8_t tpmi_sel = 0;
+  const uint8_t nrOfLayers = ul_ri+1;
   int16_t precoded_channel_matrix_re[num_prgs*num_gnb_antenna_elements];
   int16_t precoded_channel_matrix_im[num_prgs*num_gnb_antenna_elements];
   c16_t *channel_matrix16 = (c16_t*)channel_matrix;
@@ -1017,7 +1018,7 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
 
   uint8_t max_tpmi = get_max_tpmi(pusch_Config,
                                   num_ue_srs_ports,
-                                  &ul_ri,
+                                  &nrOfLayers,
                                   &additional_max_tpmi);
 
   uint8_t end_tpmi_loop = additional_max_tpmi > max_tpmi ? additional_max_tpmi : max_tpmi;
