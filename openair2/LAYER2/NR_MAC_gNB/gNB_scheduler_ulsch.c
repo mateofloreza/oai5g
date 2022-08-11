@@ -1029,7 +1029,7 @@ int nr_srs_tpmi_estimation(const NR_PUSCH_Config_t *pusch_Config,
   // [ (gI=2,uI=0) (gI=2,uI=1) ... (gI=2,uI=num_ue_srs_ports-1) ]     [uI=2]
   //                           ...                                     ...
 
-  for(uint8_t tpmi = 0; tpmi<=end_tpmi_loop; tpmi++) {
+  for(uint8_t tpmi = 0; tpmi<=end_tpmi_loop && end_tpmi_loop>0; tpmi++) {
 
     if (tpmi > max_tpmi) {
       tpmi = end_tpmi_loop;
