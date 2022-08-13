@@ -219,15 +219,6 @@ uint8_t get_mcs_from_cqi(int mcs_table, int cqi_table, int cqi_idx)
   return 9;
 }
 
-uint8_t get_BG(uint32_t A, uint16_t R) {
-
-  float code_rate = (float) R / 10240.0f;
-  if ((A <=292) || ((A<=3824) && (code_rate <= 0.6667)) || code_rate <= 0.25)
-    return 2;
-  else
-    return 1;
-}
-
 void set_dl_dmrs_params(NR_pdsch_dmrs_t *dmrs,
                         const NR_ServingCellConfigCommon_t *scc,
                         NR_UE_DL_BWP_t *BWP,

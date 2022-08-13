@@ -474,7 +474,6 @@ uint16_t set_pm_index(NR_UE_info_t *UE,
 uint8_t get_mcs_from_cqi(int mcs_table, int cqi_table, int cqi_idx);
 
 uint8_t get_dl_nrOfLayers(NR_UE_sched_ctrl_t *sched_ctrl, nr_dci_format_t dci_format);
-uint8_t get_BG(uint32_t A, uint16_t R);
 
 const int get_dl_tda(const gNB_MAC_INST *nrmac, const NR_ServingCellConfigCommon_t *scc, int slot);
 const int get_ul_tda(const gNB_MAC_INST *nrmac, const NR_ServingCellConfigCommon_t *scc, int slot);
