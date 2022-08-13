@@ -724,6 +724,8 @@ class Containerize():
 			result = re.search('service=(?P<svc_name>[a-zA-Z0-9\_]+)', mySSH.getBefore())
 			if result is None:
 				logging.error('could not locate service name!')
+				# Forcing the down now to remove the networks and any artifacts
+				mySSH.command('docker-compose --file ci-docker-compose.yml down', '\$', 5)
 				self.exitStatus = 1
 				HTML.CreateHtmlTestRow('N/A', 'KO', CONST.ALL_PROCESSES_OK)
 				mySSH.close()
