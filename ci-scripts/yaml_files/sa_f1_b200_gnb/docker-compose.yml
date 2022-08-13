@@ -45,7 +45,7 @@ services:
         privileged: true
         container_name: sa-du-b200-gnb
         environment:
-            USE_SA_DU: 'yes'
+            USE_SA_TDD_DU: 'yes'
             USE_B2XX: 'yes'
             GNB_NAME: gNB-DU-in-docker
             MCC: '222'
