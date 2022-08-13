@@ -81,7 +81,6 @@ class Containerize():
 		self.services = ['', '', '']
 		self.nb_healthy = [0, 0, 0]
 		self.exitStatus = 0
-		self.eNB_logFile = ['', '', '']
 
 		self.testCase_id = ''
 
@@ -639,12 +638,16 @@ class Containerize():
 			result = re.search('service=(?P<svc_name>[a-zA-Z0-9\_]+)', mySSH.getBefore())
 			if result is None:
 				logging.error('could not locate service name!')
+				self.exitStatus = 1
+				HTML.CreateHtmlTestRow('N/A', 'KO', CONST.ALL_PROCESSES_OK)
+				mySSH.close()
+				return
 			svcName = result.group('svc_name')
 
 		mySSH.command('docker-compose --file ci-docker-compose.yml up -d ' + svcName, '\$', 10)
 
-		# Checking Status
-		mySSH.command('docker-compose --file ci-docker-compose.yml config', '\$', 5)
+		# Checking Status, search in docker-compose 10 lines '-A'fter service name
+		mySSH.command(f'docker-compose --file ci-docker-compose.yml config | grep -A10 {svcName}', '\$', 5)
 		result = re.search('container_name: (?P<container_name>[a-zA-Z0-9\-\_]+)', mySSH.getBefore())
 		unhealthyNb = 0
 		healthyNb = 0
@@ -684,9 +687,6 @@ class Containerize():
 					time.sleep(10)
 		mySSH.close()
 
-		self.testCase_id = HTML.testCase_id
-		self.eNB_logFile[self.eNB_instance] = 'enb_' + self.testCase_id + '.log'
-
 		if status:
 			HTML.CreateHtmlTestRow('N/A', 'OK', CONST.ALL_PROCESSES_OK)
 		else:
@@ -717,15 +717,28 @@ class Containerize():
 		mySSH = SSH.SSHConnection()
 		mySSH.open(lIpAddr, lUserName, lPassWord)
 		mySSH.command('cd ' + lSourcePath + '/' + self.yamlPath[self.eNB_instance], '\$', 5)
-		# Currently support only one
-		mySSH.command('docker-compose --file ci-docker-compose.yml config', '\$', 5)
+
+		mySSH.command('docker-compose --file ci-docker-compose.yml config --services | sed -e "s@^@service=@" 2>&1', '\$', 10)
+		svcName = self.services[self.eNB_instance]
+		if svcName == '':
+			result = re.search('service=(?P<svc_name>[a-zA-Z0-9\_]+)', mySSH.getBefore())
+			if result is None:
+				logging.error('could not locate service name!')
+				self.exitStatus = 1
+				HTML.CreateHtmlTestRow('N/A', 'KO', CONST.ALL_PROCESSES_OK)
+				mySSH.close()
+				return
+			svcName = result.group('svc_name')
+
 		containerName = ''
 		containerToKill = False
+		logFile = ''
+		# Checking Status, search in docker-compose 10 lines '-A'fter service name
+		mySSH.command(f'docker-compose --file ci-docker-compose.yml config | grep -A10 {svcName}', '\$', 5)
 		result = re.search('container_name: (?P<container_name>[a-zA-Z0-9\-\_]+)', mySSH.getBefore())
-		if self.eNB_logFile[self.eNB_instance] == '':
-			self.eNB_logFile[self.eNB_instance] = 'enb_' + HTML.testCase_id + '.log'
 		if result is not None:
 			containerName = result.group('container_name')
+			logFile = containerName + '_' + HTML.testCase_id + '.log'
 			containerToKill = True
 		if containerToKill:
 			mySSH.command('docker inspect ' + containerName, '\$', 30)
@@ -737,7 +750,7 @@ class Containerize():
 			time.sleep(5)
 			mySSH.command('docker kill --signal KILL ' + containerName, '\$', 30)
 			time.sleep(5)
-			mySSH.command('docker logs ' + containerName + ' > ' + lSourcePath + '/cmake_targets/' + self.eNB_logFile[self.eNB_instance], '\$', 30)
+			mySSH.command('docker logs ' + containerName + ' > ' + lSourcePath + '/cmake_targets/' + logFile, '\$', 30)
 			mySSH.command('docker rm -f ' + containerName, '\$', 30)
 		# Forcing the down now to remove the networks and any artifacts
 		mySSH.command('docker-compose --file ci-docker-compose.yml down', '\$', 5)
@@ -748,7 +761,7 @@ class Containerize():
 
 		# Analyzing log file!
 		if containerToKill:
-			copyin_res = mySSH.copyin(lIpAddr, lUserName, lPassWord, lSourcePath + '/cmake_targets/' + self.eNB_logFile[self.eNB_instance], '.')
+			copyin_res = mySSH.copyin(lIpAddr, lUserName, lPassWord, lSourcePath + '/cmake_targets/' + logFile, '.')
 		else:
 			copyin_res = 0
 		nodeB_prefix = 'e'
@@ -757,8 +770,8 @@ class Containerize():
 			HTML.CreateHtmlTestRow('N/A', 'KO', CONST.ENB_PROCESS_NOLOGFILE_TO_ANALYZE)
 		else:
 			if containerToKill:
-				logging.debug('\u001B[1m Analyzing ' + nodeB_prefix + 'NB logfile \u001B[0m ' + self.eNB_logFile[self.eNB_instance])
-				logStatus = RAN.AnalyzeLogFile_eNB(self.eNB_logFile[self.eNB_instance], HTML, self.ran_checkers)
+				logging.debug('\u001B[1m Analyzing ' + nodeB_prefix + 'NB logfile \u001B[0m ' + logFile)
+				logStatus = RAN.AnalyzeLogFile_eNB(logFile, HTML, self.ran_checkers)
 			else:
 				logStatus = 0
 			if (logStatus < 0):
@@ -767,7 +780,7 @@ class Containerize():
 				HTML.CreateHtmlTestRow(RAN.runtime_stats, 'OK', CONST.ALL_PROCESSES_OK)
 			# all the xNB run logs shall be on the server 0 for logCollecting
 			if containerToKill and self.eNB_serverId[self.eNB_instance] != '0':
-				mySSH.copyout(self.eNBIPAddress, self.eNBUserName, self.eNBPassword, './' + self.eNB_logFile[self.eNB_instance], self.eNBSourceCodePath + '/cmake_targets/')
+				mySSH.copyout(self.eNBIPAddress, self.eNBUserName, self.eNBPassword, './' + logFile, self.eNBSourceCodePath + '/cmake_targets/')
 		logging.info('\u001B[1m Undeploying OAI Object Pass\u001B[0m')
 
 	def DeployGenObject(self, HTML, RAN, UE):
