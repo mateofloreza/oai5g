@@ -58,6 +58,7 @@ CMAKE_CMD="$CMAKE"
 NOAVX512="False"
 BUILD_ECLIPSE=0
 NR="False"
+LATSEQ="False"
 OPTIONAL_LIBRARIES="telnetsrv enbscope uescope nrscope"
 RU=0
 CMAKE_C_FLAGS=()
@@ -149,6 +150,8 @@ Options:
 --enable-cpu-affinity
 --disable-T-Tracer
    Disables the T tracer.
+--enable-latseq
+   enables latency sequence tool, https://github.com/Orange-OpenSource/LatSeq
 --disable-hardware-dependency
    Disable HW dependency during installation
 --ue-autotest-trace
@@ -396,6 +399,10 @@ function main() {
        --disable-T-Tracer)
             CMAKE_CMD="$CMAKE_CMD -DT_TRACER=False"
             echo_info "Disabling the T tracer"
+            shift 1;;
+       --enable-latseq)
+            LATSEQ="True"
+            echo info "Enabling Latency Sequence measures, https://github.com/Orange-OpenSource/LatSeq"
             shift 1;;
        --disable-hardware-dependency)
             echo_info "Disabling hardware dependency for compiling software"
