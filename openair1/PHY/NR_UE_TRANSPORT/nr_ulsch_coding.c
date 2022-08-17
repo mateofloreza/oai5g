@@ -160,11 +160,11 @@ NR_UE_ULSCH_t *new_nr_ue_ulsch(uint16_t N_RB_UL, int number_of_harq_pids, NR_DL_
 
     ulsch->harq_processes[i]->e = malloc16(14*N_RB_UL*12*16);
     DevAssert(ulsch->harq_processes[i]->e);
-    bzero(ulsch->harq_processes[i]->e,14*N_RB_UL*12*8);
+    bzero(ulsch->harq_processes[i]->e,14*N_RB_UL*12*16);
 
     ulsch->harq_processes[i]->f = malloc16(14*N_RB_UL*12*16);
     DevAssert(ulsch->harq_processes[i]->f);
-    bzero(ulsch->harq_processes[i]->f,14*N_RB_UL*12*8);
+    bzero(ulsch->harq_processes[i]->f,14*N_RB_UL*12*16);
 
     ulsch->harq_processes[i]->subframe_scheduling_flag = 0;
     ulsch->harq_processes[i]->first_tx = 1;
