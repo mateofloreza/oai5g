@@ -20,6 +20,9 @@
  */
 
 #include "nr_sdap.h"
+#if LATSEQ
+#include "common/utils/LATSEQ/latseq.h"
+#endif
 
 uint8_t nas_qfi;
 uint8_t nas_pduid;
@@ -76,7 +79,9 @@ void sdap_data_ind(rb_id_t pdcp_entity,
     LOG_E(SDAP, "%s:%d:%s: Entity not found\n", __FILE__, __LINE__, __FUNCTION__);
     return;
   }
-
+  #ifdef LATSEQ
+  LATSEQ_P("U sdap.pdu--sdap.sdu", "len%d:rnti%d:pdusession_id%d.pdcp_entity%d.sdap_default_drb%d", size, rnti, pdusession_id, pdcp_entity, sdap_entity->default_drb);
+  #endif
   sdap_entity->rx_entity(sdap_entity,
                          pdcp_entity,
                          is_gnb,

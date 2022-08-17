@@ -63,6 +63,10 @@ static int DEFENBS[] = {0};
 #include <openair1/SCHED/sched_common_vars.h>
 #include <openair2/LAYER2/MAC/mac_vars.h>
 #include <openair2/RRC/LTE/rrc_vars.h>
+#if LATSEQ
+#include "common/utils/LATSEQ/latseq.h"
+#endif
+
 
 pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;
@@ -1154,6 +1158,10 @@ int main ( int argc, char **argv ) {
   set_softmodem_sighandler();
   cpuf=get_cpu_freq_GHz();
   set_taus_seed (0);
+  
+  #if LATSEQ
+  init_latseq("/tmp/main_ocp", (uint64_t)(cpuf*1000000000LL));
+  #endif
 
   if (opp_enabled ==1)
     reset_opp_meas();
@@ -1338,6 +1346,10 @@ int main ( int argc, char **argv ) {
   oai_exit=1;
   LOG_I(ENB_APP,"oai_exit=%d\n",oai_exit);
   // stop threads
+  #if LATSEQ
+  close_latseq(); //close before end of threads
+  #endif
+
 
   if (RC.nb_inst == 0 || !NODE_IS_CU(node_type)) {
     if(IS_SOFTMODEM_DOSCOPE)

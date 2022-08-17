@@ -46,6 +46,9 @@
 #include "common/utils/LOG/vcd_signal_dumper.h"
 #include "common/utils/LOG/log.h"
 #include <syscall.h>
+#if LATSEQ
+#include "common/utils/LATSEQ/latseq.h"
+#endif
 //#define DEBUG_ULSCH_DECODING
 //#define gNB_DEBUG_TRACE
 
@@ -579,6 +582,11 @@ uint32_t nr_ulsch_decoding(PHY_VARS_gNB *phy_vars_gNB,
     LOG_D(PHY,"Added a block to decode, in pipe: %d\n",phy_vars_gNB->nbDecode);
     r_offset += E;
     offset += (Kr_bytes - (harq_process->F>>3) - ((harq_process->C>1)?3:0));
+    
+    #if LATSEQ
+    int sz=Kr_bytes - (harq_process->F>>3) - ((harq_process->C>1)?3:0);
+    LATSEQ_P("U mac.harq--mac.demux", "len%d:rnti%d:frame%d.slot%d.ulsch_id%d.ulsch_harq%d.harqpid%d.codeblocksegment%d", sz, ulsch->rnti, frame, nr_tti_rx, ULSCH_id, harq_process, harq_pid, r);
+    #endif
     //////////////////////////////////////////////////////////////////////////////////////////
   }
   return 1;
