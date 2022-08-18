@@ -53,10 +53,7 @@
 #include "common/utils/LOG/vcd_signal_dumper.h"
 
 #include <executables/softmodem-common.h>
-
-#if LATSEQ
 #include "common/utils/LATSEQ/latseq.h"
-#endif
 
 #ifdef SMBV
 #include "PHY/TOOLS/smbv.h"
@@ -605,9 +602,7 @@ void *emulatedRF_thread(void *param) {
 
 void rx_rf(RU_t *ru,int *frame,int *slot) {
   RU_proc_t *proc = &ru->proc;
-  #if LATSEQ
   LATSEQ_P("U phy.start--phy.ant","::frame%d.slot%d", frame, slot);
-  #endif
   NR_DL_FRAME_PARMS *fp = ru->nr_frame_parms;
   void *rxp[ru->nb_rx];
   unsigned int rxs;
@@ -699,9 +694,7 @@ void rx_rf(RU_t *ru,int *frame,int *slot) {
   }
 
   stop_meas(&ru->rx_fhaul);
-  #if LATSEQ
   LATSEQ_P("U phy.ant--mac.harq","len%d::frame%d.slot%d", rxs, frame, slot);
-  #endif
 }
 
 

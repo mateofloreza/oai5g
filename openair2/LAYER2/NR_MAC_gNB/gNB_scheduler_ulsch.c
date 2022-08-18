@@ -36,9 +36,7 @@
 #include <openair2/UTIL/OPT/opt.h>
 
 #include "LAYER2/NR_MAC_COMMON/nr_mac_extern.h"
-#if LATSEQ
 #include "common/utils/LATSEQ/latseq.h"
-#endif
 
 //#define SRS_IND_DEBUG
 
@@ -351,9 +349,7 @@ int nr_process_mac_pdu( instance_t module_idP,
                              mac_len,
                              1,
                              NULL);
-            #if LATSEQ
             LATSEQ_P("U rlc.pdu--pdcp.pdu", "len%d:gNBid%d.rnti%d:frame%d.slot%d.carriercompid%d.lcid%d", mac_len, module_idP, UE->rnti, frameP, slot, CC_id, rx_lcid);
-            #endif
 
             /* Updated estimated buffer when receiving data */
             if (sched_ctrl->estimated_ul_buffer >= mac_len) {
@@ -565,9 +561,7 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
         UE_scheduling_control->sched_ul_bytes = 0;
 
       nr_process_mac_pdu(gnb_mod_idP, UE, CC_idP, frameP, slotP, sduP, sdu_lenP);
-      #if LATSEQ
       LATSEQ_P("U mac.demux--rlc.pdu", "len%d:gNBid%d.rnti%d:frame%d.slot%d.harqid%d.carriercompid%d", sdu_lenP, gnb_mod_idP, current_rnti, frameP, slotP, harq_pid, CC_idP);
-      #endif
     }
     else {
       NR_UE_ul_harq_t *cur_harq = &UE_scheduling_control->ul_harq_processes[harq_pid];

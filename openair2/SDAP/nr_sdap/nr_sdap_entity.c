@@ -24,9 +24,7 @@
 #include <openair2/LAYER2/PDCP_v10.1.0/pdcp.h>
 #include <openair3/ocp-gtpu/gtp_itf.h>
 #include "openair2/LAYER2/nr_pdcp/nr_pdcp_ue_manager.h"
-#if LATSEQ
 #include "common/utils/LATSEQ/latseq.h"
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -214,9 +212,7 @@ static void nr_sdap_rx_entity(nr_sdap_entity_t *entity,
     GTPV1U_GNB_TUNNEL_DATA_REQ(message_p).pdusession_id       = pdusession_id;
     LOG_D(SDAP, "%s()  sending message to gtp size %d\n", __func__,  size-offset);
     itti_send_msg_to_task(TASK_GTPV1_U, INSTANCE_DEFAULT, message_p);
-    #ifdef LATSEQ
     LATSEQ_P("U sdap.sdu--gtp.out", "len%d:rnti%d:pdusession_id%d.pdcp_entity%d.sdap_default_drb%d", size-offset, rnti, pdusession_id, pdcp_entity, entity->default_drb);
-    #endif
   } else { //nrUE
     /*
      * TS 37.324 5.2 Data transfer

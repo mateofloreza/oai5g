@@ -45,9 +45,7 @@ extern RAN_CONTEXT_t RC;
 #include <stdint.h>
 
 #include <executables/softmodem-common.h>
-#if LATSEQ
 #include "common/utils/LATSEQ/latseq.h"
-#endif
 
 static nr_rlc_ue_manager_t *nr_rlc_ue_manager;
 
@@ -567,9 +565,7 @@ rb_found:
     LOG_E(RLC, "%s:%d:%s: ERROR: pdcp_data_ind failed\n", __FILE__, __LINE__, __FUNCTION__);
     /* what to do in case of failure? for the moment: nothing */
   }
-  #if LATSEQ
   LATSEQ_P("U pdcp.pdu--sdap.pdu", "len%d:gNBid%d.rnti%d:pdusession_id%d.memblck_poolid%d", size, ctx.module_id, ctx.rnti, rb_id, memblock->pool_id); // radiobearer_id is also pdusession_id
-  #endif
 }
 
 static void successful_delivery(void *_ue, nr_rlc_entity_t *entity, int sdu_id)
