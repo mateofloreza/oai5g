@@ -1125,4 +1125,46 @@ void config_uplinkBWP(NR_BWP_Uplink_t *ubwp,
   ubwp->bwp_Dedicated->beamFailureRecoveryConfig = NULL;
 }
 
+void conig_rsrp_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
+                            const NR_ServingCellConfigCommon_t *servingcellconfigcommon,
+                            NR_PUCCH_CSI_Resource_t *pucchcsires,
+                            int do_csi, // if rsrp is based on CSI or SSB
+                            int rep_id,
+                            int uid) {
+
+  NR_CSI_ReportConfig_t *csirep = calloc(1,sizeof(*csirep));
+  csirep->reportConfigId=rep_id;
+  csirep->carrier=NULL;
+  int resource_id = -1;
+  for (int csi_list=0; csi_list<csi_measconfig->csi_ResourceConfigToAddModList->list.count; csi_list++) {
+    NR_CSI_ResourceConfig_t *csires = csi_measconfig->csi_ResourceConfigToAddModList->list.array[csi_list];
+    if(csires->csi_RS_ResourceSetList.present == NR_CSI_ResourceConfig__csi_RS_ResourceSetList_PR_nzp_CSI_RS_SSB) {
+      if(do_csi) {
+        if (csires->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList)
+          resource_id = csires->csi_ResourceConfigId;
+      }
+      else {
+        if (csires->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->csi_SSB_ResourceSetList)
+          resource_id = csires->csi_ResourceConfigId;
+      }
+    }
+  }
+  AssertFatal(resource_id>0,"No resource for RSRP found\n");
+  csirep->resourcesForChannelMeasurement=resource_id;
+  csirep->csi_IM_ResourcesForInterference=NULL;
+  csirep->nzp_CSI_RS_ResourcesForInterference=NULL;
+  csirep->reportConfigType.present = NR_CSI_ReportConfig__reportConfigType_PR_periodic;
+  set_csi_meas_periodicity(); // TODO
+  ASN_SEQUENCE_ADD(&csirep->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list,pucchcsires);
+  if(do_csi) {
+    csirep->reportQuantity.present = NR_CSI_ReportConfig__reportQuantity_PR_cri_RSRP;
+    csirep->reportQuantity.choice.cri_RSRP=(NULL_t)0;
+  }
+  else {
+    csirep->reportQuantity.present = NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP;
+    csirep->reportQuantity.choice.ssb_Index_RSRP=(NULL_t)0;
+  }
+  ASN_SEQUENCE_ADD(&csi_MeasConfig->csi_ReportConfigToAddModList->list,csirep);
+}
+
 
