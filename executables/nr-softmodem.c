@@ -53,6 +53,7 @@
 #include "SIMULATION/TOOLS/sim.h"
 #include <targets/RT/USER/lte-softmodem.h>
 
+
 #ifdef SMBV
 #include "PHY/TOOLS/smbv.h"
 unsigned short config_frames[4] = {2,9,11,13};
@@ -80,6 +81,7 @@ unsigned short config_frames[4] = {2,9,11,13};
 #include "gnb_paramdef.h"
 #include <openair3/ocp-gtpu/gtp_itf.h>
 #include "nfapi/oai_integration/vendor_ext.h"
+#include "common/utils/LATSEQ/latseq.h"
 
 pthread_cond_t nfapi_sync_cond;
 pthread_mutex_t nfapi_sync_mutex;
@@ -719,6 +721,7 @@ int main( int argc, char **argv ) {
   if (NFAPI_MODE==NFAPI_MODE_VNF)
     wait_nfapi_init("main?");
 
+  init_latseq("/tmp/main_ocp", (uint64_t)(cpuf*1000000000LL));
   printf("START MAIN THREADS\n");
   // start the main threads
   number_of_cards = 1;
@@ -823,6 +826,7 @@ int main( int argc, char **argv ) {
       }
 
   #endif*/
+  close_latseq(); //close before end of threads
   printf("stopping MODEM threads\n");
   // cleanup
   stop_gNB(NB_gNB_INST);
