@@ -317,32 +317,9 @@ class Containerize():
 		if forceBaseImageBuild:
 			mySSH.command(self.cli + ' build ' + self.cliBuildOptions + ' --target ' + baseImage + ' --tag ' + baseImage + ':' + baseTag + ' --file docker/Dockerfile.base' + self.dockerfileprefix + ' . > cmake_targets/log/ran-base.log 2>&1', '\$', 1600)
 		# First verify if the base image was properly created.
-		status = True
 		mySSH.command(self.cli + ' image inspect --format=\'Size = {{.Size}} bytes\' ' + baseImage + ':' + baseTag, '\$', 5)
 		if mySSH.getBefore().count('o such image') != 0:
 			logging.error('\u001B[1m Could not build properly ran-base\u001B[0m')
-			status = False
-		else:
-			result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
-			if result is not None:
-				imageSize = float(result.group('size'))
-				imageSize = imageSize / 1000
-				if imageSize < 1000:
-					logging.debug('\u001B[1m   ran-base size is ' + ('%.0f' % imageSize) + ' kbytes\u001B[0m')
-					self.allImagesSize['ran-base'] = str(round(imageSize,1)) + ' kbytes'
-				else:
-					imageSize = imageSize / 1000
-					if imageSize < 1000:
-						logging.debug('\u001B[1m   ran-base size is ' + ('%.0f' % imageSize) + ' Mbytes\u001B[0m')
-						self.allImagesSize['ran-base'] = str(round(imageSize,1)) + ' Mbytes'
-					else:
-						imageSize = imageSize / 1000
-						logging.debug('\u001B[1m   ran-base size is ' + ('%.3f' % imageSize) + ' Gbytes\u001B[0m')
-						self.allImagesSize['ran-base'] = str(round(imageSize,1)) + ' Gbytes'
-			else:
-				logging.debug('ran-base size is unknown')
-		# If the base image failed, no need to continue
-		if not status:
 			# Recover the name of the failed container?
 			mySSH.command(self.cli + ' ps --quiet --filter "status=exited" -n1 | xargs ' + self.cli + ' rm -f', '\$', 5)
 			mySSH.command(self.cli + ' image prune --force', '\$', 30)
@@ -352,20 +329,32 @@ class Containerize():
 			HTML.CreateHtmlTabFooter(False)
 			sys.exit(1)
 		else:
-			# Recover build logs, for the moment only possible when build is successful
-			mySSH.command(self.cli + ' create --name test ' + baseImage + ':' + baseTag, '\$', 5)
-			mySSH.command('mkdir -p cmake_targets/log/ran-base', '\$', 5)
-			mySSH.command(self.cli + ' cp test:/oai-ran/cmake_targets/log/. cmake_targets/log/ran-base', '\$', 5)
-			mySSH.command(self.cli + ' rm -f test', '\$', 5)
+			result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
+			if result is not None:
+				size = float(result.group("size")) / 1000000
+				imageSizeStr = f'{size:.1f}'
+				logging.debug(f'\u001B[1m   ran-base size is {imageSizeStr} Mbytes\u001B[0m')
+				self.allImagesSize['ran-base'] = f'{imageSizeStr} Mbytes'
+			else:
+				logging.debug('ran-base size is unknown')
+
+		# Recover build logs, for the moment only possible when build is successful
+		mySSH.command(self.cli + ' create --name test ' + baseImage + ':' + baseTag, '\$', 5)
+		mySSH.command('mkdir -p cmake_targets/log/ran-base', '\$', 5)
+		mySSH.command(self.cli + ' cp test:/oai-ran/cmake_targets/log/. cmake_targets/log/ran-base', '\$', 5)
+		mySSH.command(self.cli + ' rm -f test', '\$', 5)
 
 		# Build the target image(s)
+		status = True
+		attemptedImages = ['ran-base']
 		for image,pattern in imageNames:
+			attemptedImages += [image]
 			# the archived Dockerfiles have "ran-base:latest" as base image
 			# we need to update them with proper tag
-			mySSH.command('sed -i -e "s#' + baseImage + ':latest#' + baseImage + ':' + baseTag + '#" docker/Dockerfile.' + pattern + self.dockerfileprefix, '\$', 5)
+			mySSH.command(f'sed -i -e "s#{baseImage}:latest#{baseImage}:{baseTag}#" docker/Dockerfile.{pattern}{self.dockerfileprefix}', '\$', 5)
 			if image != 'ran-build':
-				mySSH.command('sed -i -e "s#' + "ran-build" + ':latest#' + "ran-build" + ':' + imageTag + '#" docker/Dockerfile.' + pattern + self.dockerfileprefix, '\$', 5)
-			mySSH.command(self.cli + ' build ' + self.cliBuildOptions + ' --target ' + image + ' --tag ' + image + ':' + imageTag + ' --file docker/Dockerfile.' + pattern + self.dockerfileprefix + ' . > cmake_targets/log/' + image + '.log 2>&1', '\$', 1200)
+				mySSH.command(f'sed -i -e "s#ran-build:latest#ran-build:{imageTag}#" docker/Dockerfile.{pattern}{self.dockerfileprefix}', '\$', 5)
+			mySSH.command(f'{self.cli} build {self.cliBuildOptions} --target {image} --tag {image}:{imageTag} --file docker/Dockerfile.{pattern}{self.dockerfileprefix} . > cmake_targets/log/{image}.log 2>&1', '\$', 1200)
 			# Flatten Image
 			if image != 'ran-build':
 				mySSH.command('python3 ./ci-scripts/flatten_image.py --tag ' + image + ':' + imageTag, '\$', 300)
@@ -380,25 +369,16 @@ class Containerize():
 				# Here we should check if the last container corresponds to a failed command and destroy it
 				mySSH.command(self.cli + ' ps --quiet --filter "status=exited" -n1 | xargs ' + self.cli + ' rm -f', '\$', 5)
 				self.allImagesSize[image] = 'N/A -- Build Failed'
+				break
 			else:
 				result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
 				if result is not None:
-					imageSize = float(result.group('size'))
-					imageSize = imageSize / 1000
-					if imageSize < 1000:
-						logging.debug('\u001B[1m   ' + image + ' size is ' + ('%.0f' % imageSize) + ' kbytes\u001B[0m')
-						self.allImagesSize[image] = str(round(imageSize,1)) + ' kbytes'
-					else:
-						imageSize = imageSize / 1000
-						if imageSize < 1000:
-							logging.debug('\u001B[1m   ' + image + ' size is ' + ('%.0f' % imageSize) + ' Mbytes\u001B[0m')
-							self.allImagesSize[image] = str(round(imageSize,1)) + ' Mbytes'
-						else:
-							imageSize = imageSize / 1000
-							logging.debug('\u001B[1m   ' + image + ' size is ' + ('%.3f' % imageSize) + ' Gbytes\u001B[0m')
-							self.allImagesSize[image] = str(round(imageSize,1)) + ' Gbytes'
+					size = float(result.group("size")) / 1000000
+					imageSizeStr = f'{size:.1f}'
+					logging.debug(f'\u001B[1m   {image} size is {imageSizeStr} Mbytes\u001B[0m')
+					self.allImagesSize[image] = f'{imageSizeStr} Mbytes'
 				else:
-					logging.debug('ran-base size is unknown')
+					logging.debug(f'{image} size is unknown')
 					self.allImagesSize[image] = 'unknown'
 			# Now pruning dangling images in between target builds
 			mySSH.command(self.cli + ' image prune --force', '\$', 30)
@@ -415,8 +395,7 @@ class Containerize():
 		mySSH.close()
 
 		# Analyze the logs
-		images = ['ran-base'] + [tpl[0] for tpl in imageNames]
-		collectInfo = AnalyzeBuildLogs(build_log_name, images, status)
+		collectInfo = AnalyzeBuildLogs(build_log_name, attemptedImages, status)
 		
 		if status:
 			logging.info('\u001B[1m Building OAI Image(s) Pass\u001B[0m')
