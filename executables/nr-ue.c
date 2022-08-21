@@ -123,6 +123,7 @@ static size_t dump_L1_UE_meas_stats(PHY_VARS_NR_UE *ue, char *output, size_t max
   output += print_meas_log(&ue->dlsch_ldpc_decoding_stats, " ->  LDPC Decode", NULL, NULL, output, end - output);
   output += print_meas_log(&ue->dlsch_unscrambling_stats, "PDSCH unscrambling", NULL, NULL, output, end - output);
   output += print_meas_log(&ue->dlsch_rx_pdcch_stats, "PDCCH handling", NULL, NULL, output, end - output);
+  output += print_meas_log(&ue->total_proc, "Total slot processing", NULL, NULL, output, end - output);
   return output - begin;
 }
 
@@ -925,6 +926,7 @@ void *UE_thread(void *arg) {
     }
 
 
+    start_meas(&UE->total_proc);
     absolute_slot++;
 
     // whatever means thread_idx
@@ -1079,6 +1081,7 @@ void *UE_thread(void *arg) {
     nbSlotProcessing++;
     LOG_D(PHY,"Number of slots being processed at the moment: %d\n",nbSlotProcessing);
     pushTpool(&(get_nrUE_params()->Tpool), msgToPush);
+    stop_meas(&UE->total_proc);
 
   } // while !oai_exit
 

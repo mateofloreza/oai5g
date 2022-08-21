@@ -972,6 +972,7 @@ typedef struct {
   time_stats_t dlsch_modulation_SIC_stats;
   time_stats_t dlsch_llr_stripping_unit_SIC_stats;
   time_stats_t dlsch_unscrambling_SIC_stats;
+  time_stats_t total_proc;
 
 #if ENABLE_RAL
   hash_table_t    *ral_thresholds_timed;
