@@ -27,6 +27,7 @@
 #include "nr_rlc_pdu.h"
 
 #include "LOG/log.h"
+#include "common/utils/LATSEQ/latseq.h"
 
 /* for a given SDU/SDU segment, computes the corresponding PDU header size */
 static int compute_pdu_header_size(nr_rlc_entity_am_t *entity,
@@ -715,6 +716,8 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
 
   data_size = size - decoder.byte;
 
+  LATSEQ_P("U rlc.pdu.decoded--rlc.pdu.received", "len%d::bufferaddress%d.dc%d.p%d.si%d.sn%d.so%d", data_size, buffer, dc, p, si, sn, so);
+
   /* dicard PDU if no data */
   if (data_size <= 0) {
     LOG_D(RLC, "%s:%d:%s: warning: discard PDU, no data\n",
@@ -768,7 +771,7 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
             __FILE__, __LINE__, __FUNCTION__);
     }
   }
-
+  LATSEQ_P("U rlc.pdu.received--rlc.sdu.pushed", "len%d::dc%d.p%d.si%d.sn%d.so%d", data_size, dc, p, si, sn, so);
   return;
 
 err:

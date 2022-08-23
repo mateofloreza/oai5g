@@ -721,7 +721,7 @@ int main( int argc, char **argv ) {
   if (NFAPI_MODE==NFAPI_MODE_VNF)
     wait_nfapi_init("main?");
 
-  init_latseq("/tmp/main_ocp", (uint64_t)(cpuf*1000000000LL));
+  init_latseq("/tmp/nr-softmodem", (uint64_t)(cpuf*1000000000LL));
   printf("START MAIN THREADS\n");
   // start the main threads
   number_of_cards = 1;
