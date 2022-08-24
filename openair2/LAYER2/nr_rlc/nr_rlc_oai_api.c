@@ -561,11 +561,11 @@ rb_found:
   }
   memcpy(memblock->data, buf, size);
   LOG_D(PDCP, "Calling PDCP layer from RLC in %s\n", __FUNCTION__);
+  LATSEQ_P("U rlc.sdu.push--sdap.pdu", "len%d:rnti%d:pdusession_id%d.memblck_poolid%d", size, ctx.rnti, rb_id, memblock->pool_id); // radiobearer_id is also pdusession_id
   if (!pdcp_data_ind(&ctx, is_srb, 0, rb_id, size, memblock, NULL, NULL)) {
     LOG_E(RLC, "%s:%d:%s: ERROR: pdcp_data_ind failed\n", __FILE__, __LINE__, __FUNCTION__);
     /* what to do in case of failure? for the moment: nothing */
   }
-  LATSEQ_P("U rlc.sdu.pushed--sdap.pdu", "len%d:gNBid%d.rnti%d:pdusession_id%d.memblck_poolid%d", size, ctx.module_id, ctx.rnti, rb_id, memblock->pool_id); // radiobearer_id is also pdusession_id
 }
 
 static void successful_delivery(void *_ue, nr_rlc_entity_t *entity, int sdu_id)

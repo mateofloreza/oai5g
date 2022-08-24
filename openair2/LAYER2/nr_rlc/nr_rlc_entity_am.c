@@ -771,7 +771,7 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
             __FILE__, __LINE__, __FUNCTION__);
     }
   }
-  LATSEQ_P("U rlc.pdu.received--rlc.sdu.pushed", "len%d::dc%d.p%d.si%d.sn%d.so%d", data_size, dc, p, si, sn, so);
+  LATSEQ_P("U rlc.pdu.received--rlc.sdu.push", "len%d::dc%d.p%d.si%d.sn%d.so%d", data_size, dc, p, si, sn, so);
   return;
 
 err:

@@ -338,6 +338,7 @@ int nr_process_mac_pdu( instance_t module_idP,
                   mac_len);
             UE->mac_stats.ul.lc_bytes[rx_lcid] += mac_len;
             
+            LATSEQ_P("U mac.sdu.push--rlc.pdu.decoded", "len%d:rnti%d:frame%d.slot%d.carriercompid%d.lcid%d.bufferaddress%d", mac_len, UE->rnti, frameP, slot, CC_id, rx_lcid, pduP+mac_subheader_len);
             mac_rlc_data_ind(module_idP,
                              UE->rnti,
                              module_idP,
@@ -349,7 +350,6 @@ int nr_process_mac_pdu( instance_t module_idP,
                              mac_len,
                              1,
                              NULL);
-            LATSEQ_P("U mac.sdu.pushed--rlc.pdu.decoded", "len%d:gNBid%d.rnti%d:frame%d.slot%d.carriercompid%d.lcid%d.bufferaddress%d", mac_len, module_idP, UE->rnti, frameP, slot, CC_id, rx_lcid, pduP+mac_subheader_len);
 
             /* Updated estimated buffer when receiving data */
             if (sched_ctrl->estimated_ul_buffer >= mac_len) {
@@ -561,7 +561,7 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
         UE_scheduling_control->sched_ul_bytes = 0;
 
       nr_process_mac_pdu(gnb_mod_idP, UE, CC_idP, frameP, slotP, sduP, sdu_lenP);
-      LATSEQ_P("U mac.demux--mac.sdu.pushed", "len%d:gNBid%d.rnti%d:frame%d.slot%d.harqpid%d.carriercompid%d", sdu_lenP, gnb_mod_idP, current_rnti, frameP, slotP, harq_pid, CC_idP);
+      LATSEQ_P("U mac.demux--mac.sdu.push", "len%d:rnti%d:frame%d.slot%d.harqpid%d.carriercompid%d", sdu_lenP, current_rnti, frameP, slotP, harq_pid, CC_idP);
     }
     else {
       NR_UE_ul_harq_t *cur_harq = &UE_scheduling_control->ul_harq_processes[harq_pid];
