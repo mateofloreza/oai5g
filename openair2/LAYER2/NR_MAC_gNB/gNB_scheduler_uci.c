@@ -1221,7 +1221,7 @@ void nr_sr_reporting(gNB_MAC_INST *nrmac, frame_t SFN, sub_frame_t slot, int mod
         if (curr_pucch->active &&
             curr_pucch->frame == SFN &&
             curr_pucch->ul_slot == slot &&
-            curr_pucch->resource_indicator == found) {
+            curr_pucch->resource_indicator == idx) {
           curr_pucch->sr_flag = true;
           found = true;
           break;
