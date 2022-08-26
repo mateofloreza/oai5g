@@ -1086,7 +1086,7 @@ void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
   pucch_pdu->cyclic_prefix = (current_BWP->cyclicprefix==NULL) ? 0 : *current_BWP->cyclicprefix;
 
   NR_PUCCH_Config_t *pucch_Config = current_BWP->pucch_Config;
-  if (r_pucch<0 || pucch_Config){
+  if (r_pucch<0 || pucch_Config) {
       LOG_D(NR_MAC,"pucch_acknak: Filling dedicated configuration for PUCCH\n");
 
       AssertFatal(pucch_Config->resourceSetToAddModList!=NULL,
@@ -1165,6 +1165,7 @@ void nr_configure_pucch(nfapi_nr_pucch_pdu_t* pucch_pdu,
             break;
           case NR_PUCCH_Resource__format_PR_format2 :
             pucch_pdu->format_type = 2;
+            pucch_pdu->sr_flag = O_sr;
             pucch_pdu->nr_of_symbols = pucchres->format.choice.format2->nrofSymbols;
             pucch_pdu->start_symbol_index = pucchres->format.choice.format2->startingSymbolIndex;
             pucch_pdu->data_scrambling_id = pusch_id!= NULL ? *pusch_id : *scc->physCellId;
@@ -2342,6 +2343,17 @@ void configure_UE_BWP(gNB_MAC_INST *nr_mac,
   else
     UL_BWP->pucch_ConfigCommon = scc->uplinkConfigCommon->initialUplinkBWP->pucch_ConfigCommon->choice.setup;
 
+  UL_BWP->max_fb_time = 0;
+  if(DL_BWP->dci_format != NR_DL_DCI_FORMAT_1_0 &&
+     UL_BWP->pucch_Config) {
+    for (int i=0; i<UL_BWP->pucch_Config->dl_DataToUL_ACK->list.count; i++) {
+      if(*UL_BWP->pucch_Config->dl_DataToUL_ACK->list.array[i] > UL_BWP->max_fb_time)
+        UL_BWP->max_fb_time = *UL_BWP->pucch_Config->dl_DataToUL_ACK->list.array[i];
+    }
+  }
+  else
+     UL_BWP->max_fb_time = 8; // default value
+
 
   if(UE) {
     // setting PDCCH related structures for sched_ctrl
@@ -2376,6 +2388,8 @@ void configure_UE_BWP(gNB_MAC_INST *nr_mac,
 
     if (UL_BWP->csi_MeasConfig)
       compute_csi_bitlen (UL_BWP->csi_MeasConfig, UE->csi_report_template);
+
+    set_sched_pucch_list(sched_ctrl, UL_BWP, scc);
 
   }
 
@@ -2423,6 +2437,7 @@ void configure_UE_BWP(gNB_MAC_INST *nr_mac,
                                           NR_RNTI_C,
                                           target_ss,
                                           false);
+
 }
 
 //------------------------------------------------------------------------------
@@ -2506,6 +2521,34 @@ NR_UE_info_t *add_new_nr_ue(gNB_MAC_INST *nr_mac, rnti_t rntiP, NR_CellGroupConf
   LOG_D(NR_MAC, "Add NR rnti %x\n", rntiP);
   dump_nr_list(UE_info->list);
   return (UE);
+}
+
+void set_sched_pucch_list(NR_UE_sched_ctrl_t *sched_ctrl,
+                          NR_UE_UL_BWP_t *ul_bwp,
+                          NR_ServingCellConfigCommon_t *scc) {
+
+  const NR_TDD_UL_DL_Pattern_t *tdd = scc->tdd_UL_DL_ConfigurationCommon ? &scc->tdd_UL_DL_ConfigurationCommon->pattern1 : NULL;
+  const int n_slots_frame = nr_slots_per_frame[ul_bwp->scs];
+  const int nr_slots_period = tdd ? n_slots_frame / get_nb_periods_per_frame(tdd->dl_UL_TransmissionPeriodicity) : n_slots_frame;
+  const int n_ul_slots_period = tdd ? tdd->nrofUplinkSlots + (tdd->nrofUplinkSymbols > 0 ? 1 : 0) : n_slots_frame;
+
+  const int list_size = n_ul_slots_period << (ul_bwp->max_fb_time/nr_slots_period);
+  if(!sched_ctrl->sched_pucch) {
+    sched_ctrl->sched_pucch = malloc(list_size * sizeof(*sched_ctrl->sched_pucch));
+    sched_ctrl->sched_pucch_size = list_size;
+    for(int i=0; i<list_size; i++) {
+      NR_sched_pucch_t *curr_pucch = &sched_ctrl->sched_pucch[i];
+      memset(curr_pucch, 0, sizeof(*curr_pucch));
+    }
+  }
+  else if (list_size > sched_ctrl->sched_pucch_size) {
+    sched_ctrl->sched_pucch = realloc(sched_ctrl->sched_pucch, list_size * sizeof(*sched_ctrl->sched_pucch));
+    for(int i=sched_ctrl->sched_pucch_size; i<list_size; i++){
+      NR_sched_pucch_t *curr_pucch = &sched_ctrl->sched_pucch[i];
+      memset(curr_pucch, 0, sizeof(*curr_pucch));
+    }
+    sched_ctrl->sched_pucch_size = list_size;
+  }
 }
 
 void create_dl_harq_list(NR_UE_sched_ctrl_t *sched_ctrl,
@@ -2627,23 +2670,17 @@ uint8_t nr_get_tpc(int target, uint8_t cqi, int incr) {
 
 void get_pdsch_to_harq_feedback(NR_PUCCH_Config_t *pucch_Config,
                                 nr_dci_format_t dci_format,
-                                int *max_fb_time,
                                 uint8_t *pdsch_to_harq_feedback) {
 
   if (dci_format == NR_DL_DCI_FORMAT_1_0) {
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<8; i++)
       pdsch_to_harq_feedback[i] = i+1;
-      if(pdsch_to_harq_feedback[i]>*max_fb_time)
-        *max_fb_time = pdsch_to_harq_feedback[i];
-    }
   }
   else {
     AssertFatal(pucch_Config!=NULL,"pucch_Config shouldn't be null here\n");
     if(pucch_Config->dl_DataToUL_ACK != NULL) {
       for (int i=0; i<8; i++) {
         pdsch_to_harq_feedback[i] = *pucch_Config->dl_DataToUL_ACK->list.array[i];
-        if(pdsch_to_harq_feedback[i]>*max_fb_time)
-          *max_fb_time = pdsch_to_harq_feedback[i];
       }
     }
     else
