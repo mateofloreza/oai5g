@@ -718,7 +718,7 @@ void set_pucch_power_config(NR_PUCCH_Config_t *pucch_Config, int do_csirs) {
 }
 
 static void set_SR_periodandoffset(NR_SchedulingRequestResourceConfig_t *schedulingRequestResourceConfig,
-                            const NR_ServingCellConfigCommon_t *scc)
+                                   const NR_ServingCellConfigCommon_t *scc)
 {
   const NR_TDD_UL_DL_Pattern_t *tdd = scc->tdd_UL_DL_ConfigurationCommon ? &scc->tdd_UL_DL_ConfigurationCommon->pattern1 : NULL;
   int sr_slot = 1; // in FDD SR in slot 1
@@ -1125,19 +1125,79 @@ void config_uplinkBWP(NR_BWP_Uplink_t *ubwp,
   ubwp->bwp_Dedicated->beamFailureRecoveryConfig = NULL;
 }
 
+void set_csi_meas_periodicity(const NR_ServingCellConfigCommon_t *scc,
+                              NR_CSI_ReportConfig_t *csirep,
+                              int uid,
+                              bool is_rsrp)
+{
+
+  const NR_TDD_UL_DL_Pattern_t *tdd = scc->tdd_UL_DL_ConfigurationCommon ? &scc->tdd_UL_DL_ConfigurationCommon->pattern1 : NULL;
+  const int n_slots_frame = slotsperframe[*scc->ssbSubcarrierSpacing];
+  const int n_ul_slots_period = tdd ? (tdd->nrofUplinkSlots + (tdd->nrofUplinkSymbols>0)) :
+                                n_slots_frame;
+  const int n_slots_period = tdd ? n_slots_frame / get_nb_periods_per_frame(tdd->dl_UL_TransmissionPeriodicity) : n_slots_frame;
+  const int ideal_period = MAX_MOBILES_PER_GNB*2*n_slots_period/n_ul_slots_period; // 2 reports per UE
+  AssertFatal(ideal_period<320,"Not enough UL slots to accomodate all possible UEs. Need to rework the implementation\n");
+  const int first_ul_slot_period = tdd ? tdd->nrofDownlinkSlots : 0;
+  const int idx = (uid<<1)+is_rsrp;
+  const int offset = first_ul_slot_period + idx%n_ul_slots_period + (idx/n_ul_slots_period)*n_slots_period;
+
+  if (ideal_period<5) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots4;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots4 = offset;
+  }
+  else if (ideal_period<6) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots5;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots5 = offset;
+  }
+  else if (ideal_period<9) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots8;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots8 = offset;
+  }
+  else if (ideal_period<11) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots10;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots10 = offset;
+  }
+  else if (ideal_period<17) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots16;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots16 = offset;
+  }
+  else if (ideal_period<21) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots20;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots20 = offset;
+  }
+  else if (ideal_period<41) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots40;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots40 = offset;
+  }
+  else if (ideal_period<81) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots80;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots80 = offset;
+  }
+  else if (ideal_period<161) {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots160;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots160 = offset;
+  }
+  else {
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.present=NR_CSI_ReportPeriodicityAndOffset_PR_slots320;
+    csirep->reportConfigType.choice.periodic->reportSlotConfig.choice.slots320 = offset;
+  }
+}
+
 void conig_rsrp_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
                             const NR_ServingCellConfigCommon_t *servingcellconfigcommon,
                             NR_PUCCH_CSI_Resource_t *pucchcsires,
                             int do_csi, // if rsrp is based on CSI or SSB
                             int rep_id,
-                            int uid) {
+                            int uid)
+{
 
   NR_CSI_ReportConfig_t *csirep = calloc(1,sizeof(*csirep));
   csirep->reportConfigId=rep_id;
   csirep->carrier=NULL;
   int resource_id = -1;
-  for (int csi_list=0; csi_list<csi_measconfig->csi_ResourceConfigToAddModList->list.count; csi_list++) {
-    NR_CSI_ResourceConfig_t *csires = csi_measconfig->csi_ResourceConfigToAddModList->list.array[csi_list];
+  for (int csi_list=0; csi_list<csi_MeasConfig->csi_ResourceConfigToAddModList->list.count; csi_list++) {
+    NR_CSI_ResourceConfig_t *csires = csi_MeasConfig->csi_ResourceConfigToAddModList->list.array[csi_list];
     if(csires->csi_RS_ResourceSetList.present == NR_CSI_ResourceConfig__csi_RS_ResourceSetList_PR_nzp_CSI_RS_SSB) {
       if(do_csi) {
         if (csires->csi_RS_ResourceSetList.choice.nzp_CSI_RS_SSB->nzp_CSI_RS_ResourceSetList)
@@ -1154,7 +1214,7 @@ void conig_rsrp_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
   csirep->csi_IM_ResourcesForInterference=NULL;
   csirep->nzp_CSI_RS_ResourcesForInterference=NULL;
   csirep->reportConfigType.present = NR_CSI_ReportConfig__reportConfigType_PR_periodic;
-  set_csi_meas_periodicity(); // TODO
+  set_csi_meas_periodicity(servingcellconfigcommon, csirep, uid, true);
   ASN_SEQUENCE_ADD(&csirep->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list,pucchcsires);
   if(do_csi) {
     csirep->reportQuantity.present = NR_CSI_ReportConfig__reportQuantity_PR_cri_RSRP;
@@ -1164,6 +1224,10 @@ void conig_rsrp_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
     csirep->reportQuantity.present = NR_CSI_ReportConfig__reportQuantity_PR_ssb_Index_RSRP;
     csirep->reportQuantity.choice.ssb_Index_RSRP=(NULL_t)0;
   }
+  csirep->groupBasedBeamReporting.present = NR_CSI_ReportConfig__groupBasedBeamReporting_PR_disabled;
+  csirep->groupBasedBeamReporting.choice.disabled=calloc(1,sizeof(*csirep->groupBasedBeamReporting.choice.disabled));
+  csirep->groupBasedBeamReporting.choice.disabled->nrofReportedRS = calloc(1,sizeof(*csirep->groupBasedBeamReporting.choice.disabled->nrofReportedRS));
+  *csirep->groupBasedBeamReporting.choice.disabled->nrofReportedRS=NR_CSI_ReportConfig__groupBasedBeamReporting__disabled__nrofReportedRS_n1;
   ASN_SEQUENCE_ADD(&csi_MeasConfig->csi_ReportConfigToAddModList->list,csirep);
 }
 
