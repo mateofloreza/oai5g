@@ -1209,11 +1209,12 @@ void conig_rsrp_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
       }
     }
   }
-  AssertFatal(resource_id>0,"No resource for RSRP found\n");
+  AssertFatal(resource_id>-1,"No resource for RSRP found\n");
   csirep->resourcesForChannelMeasurement=resource_id;
   csirep->csi_IM_ResourcesForInterference=NULL;
   csirep->nzp_CSI_RS_ResourcesForInterference=NULL;
   csirep->reportConfigType.present = NR_CSI_ReportConfig__reportConfigType_PR_periodic;
+  csirep->reportConfigType.choice.periodic = calloc(1,sizeof(*csirep->reportConfigType.choice.periodic));
   set_csi_meas_periodicity(servingcellconfigcommon, csirep, uid, true);
   ASN_SEQUENCE_ADD(&csirep->reportConfigType.choice.periodic->pucch_CSI_ResourceList.list,pucchcsires);
   if(do_csi) {
