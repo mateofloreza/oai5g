@@ -23,7 +23,7 @@
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
-  name: "oai-ran-base"
+  name: "ran-base"
 spec:
     runPolicy: "Serial"
     source:
@@ -45,4 +45,4 @@ spec:
     output:
         to:
             kind: "ImageStreamTag"
-            name: "oai-ran-base:latest"
+            name: "ran-base:latest"
