@@ -163,7 +163,6 @@ class Containerize():
 		self.cliBuildOptions = ''
 		self.dockerfileprefix = ''
 		self.host = ''
-		self.allImagesSize = {}
 
 		self.deployedContainers = []
 		self.tsharkStarted = False
@@ -319,6 +318,7 @@ class Containerize():
 			mySSH.command(self.cli + ' build ' + self.cliBuildOptions + ' --target ' + baseImage + ' --tag ' + baseImage + ':' + baseTag + ' --file docker/Dockerfile.base' + self.dockerfileprefix + ' . > cmake_targets/log/ran-base.log 2>&1', '\$', 1600)
 		# First verify if the base image was properly created.
 		mySSH.command(self.cli + ' image inspect --format=\'Size = {{.Size}} bytes\' ' + baseImage + ':' + baseTag, '\$', 5)
+		allImagesSize = {}
 		if mySSH.getBefore().count('o such image') != 0:
 			logging.error('\u001B[1m Could not build properly ran-base\u001B[0m')
 			# Recover the name of the failed container?
@@ -335,7 +335,7 @@ class Containerize():
 				size = float(result.group("size")) / 1000000
 				imageSizeStr = f'{size:.1f}'
 				logging.debug(f'\u001B[1m   ran-base size is {imageSizeStr} Mbytes\u001B[0m')
-				self.allImagesSize['ran-base'] = f'{imageSizeStr} Mbytes'
+				allImagesSize['ran-base'] = f'{imageSizeStr} Mbytes'
 			else:
 				logging.debug('ran-base size is unknown')
 
@@ -369,7 +369,7 @@ class Containerize():
 				status = False
 				# Here we should check if the last container corresponds to a failed command and destroy it
 				mySSH.command(self.cli + ' ps --quiet --filter "status=exited" -n1 | xargs ' + self.cli + ' rm -f', '\$', 5)
-				self.allImagesSize[image] = 'N/A -- Build Failed'
+				allImagesSize[image] = 'N/A -- Build Failed'
 				break
 			else:
 				result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
@@ -377,10 +377,10 @@ class Containerize():
 					size = float(result.group("size")) / 1000000
 					imageSizeStr = f'{size:.1f}'
 					logging.debug(f'\u001B[1m   {image} size is {imageSizeStr} Mbytes\u001B[0m')
-					self.allImagesSize[image] = f'{imageSizeStr} Mbytes'
+					allImagesSize[image] = f'{imageSizeStr} Mbytes'
 				else:
 					logging.debug(f'{image} size is unknown')
-					self.allImagesSize[image] = 'unknown'
+					allImagesSize[image] = 'unknown'
 			# Now pruning dangling images in between target builds
 			mySSH.command(self.cli + ' image prune --force', '\$', 30)
 
@@ -401,11 +401,11 @@ class Containerize():
 		if status:
 			logging.info('\u001B[1m Building OAI Image(s) Pass\u001B[0m')
 			HTML.CreateHtmlTestRow(self.imageKind, 'OK', CONST.ALL_PROCESSES_OK)
-			HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, self.allImagesSize)
+			HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, allImagesSize)
 		else:
 			logging.error('\u001B[1m Building OAI Images Failed\u001B[0m')
 			HTML.CreateHtmlTestRow(self.imageKind, 'KO', CONST.ALL_PROCESSES_OK)
-			HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, self.allImagesSize)
+			HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, allImagesSize)
 			HTML.CreateHtmlTabFooter(False)
 			sys.exit(1)
 
@@ -530,13 +530,14 @@ class Containerize():
 		collectInfo['proxy'] = files
 		mySSH.command('docker image inspect --format=\'Size = {{.Size}} bytes\' proxy:' + tag, '\$', 5)
 		result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
+		allImagesSize = {}
 		if result is not None:
 			imageSize = float(result.group('size')) / 1000000
 			logging.debug('\u001B[1m   proxy size is ' + ('%.0f' % imageSize) + ' Mbytes\u001B[0m')
-			self.allImagesSize['proxy'] = str(round(imageSize,1)) + ' Mbytes'
+			allImagesSize['proxy'] = str(round(imageSize,1)) + ' Mbytes'
 		else:
 			logging.debug('proxy size is unknown')
-			self.allImagesSize['proxy'] = 'unknown'
+			allImagesSize['proxy'] = 'unknown'
 
 		# Cleaning any created tmp volume
 		mySSH.command(self.cli + ' volume prune --force || true','\$', 15)
@@ -544,7 +545,7 @@ class Containerize():
 
 		logging.info('\u001B[1m Building L2sim Proxy Image Pass\u001B[0m')
 		HTML.CreateHtmlTestRow('commit ' + tag, 'OK', CONST.ALL_PROCESSES_OK)
-		HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, self.allImagesSize)
+		HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, allImagesSize)
 
 	def Copy_Image_to_Test_Server(self, HTML):
 		imageTag = 'develop'
