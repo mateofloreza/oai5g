@@ -527,7 +527,7 @@ class Containerize():
 		errorandwarnings['warnings'] = 0
 		errorandwarnings['status'] = True
 		files['Target Image Creation'] = errorandwarnings
-		self.collectInfo['proxy'] = files
+		collectInfo['proxy'] = files
 		mySSH.command('docker image inspect --format=\'Size = {{.Size}} bytes\' proxy:' + tag, '\$', 5)
 		result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
 		if result is not None:
@@ -544,7 +544,7 @@ class Containerize():
 
 		logging.info('\u001B[1m Building L2sim Proxy Image Pass\u001B[0m')
 		HTML.CreateHtmlTestRow('commit ' + tag, 'OK', CONST.ALL_PROCESSES_OK)
-		HTML.CreateHtmlNextTabHeaderTestRow({}, self.allImagesSize)
+		HTML.CreateHtmlNextTabHeaderTestRow(collectInfo, self.allImagesSize)
 
 	def Copy_Image_to_Test_Server(self, HTML):
 		imageTag = 'develop'
