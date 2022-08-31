@@ -165,7 +165,7 @@ class Cluster:
 				return True
 			time.sleep(5)
 			timeout_sec -= 5
-		logging.error(f"timeout while waiting for end of build of {name}")
+		logging.error(f"timeout while waiting for end of build of {jobs}")
 		return False
 
 	def _retag_image_statement(self, sshSession, oldImage, newImage, newTag, filename):
