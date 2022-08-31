@@ -716,7 +716,7 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
 
   data_size = size - decoder.byte;
 
-  LATSEQ_P("U rlc.pdu.decoded--rlc.pdu.received", "len%d::bufferaddress%d.dc%d.p%d.si%d.sn%d.so%d", data_size, buffer, dc, p, si, sn, so);
+  LATSEQ_P("U rlc.pdu.decoded--rlc.pdu.receive", "len%d::bufferaddress%d.dc%d.p%d.si%d.sn%d.so%d", data_size, buffer, dc, p, si, sn, so);
 
   /* dicard PDU if no data */
   if (data_size <= 0) {
@@ -754,6 +754,7 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
                                         entity->rx_list, pdu);
 
   /* do reception actions (38.322 5.2.3.2.3) */
+  LATSEQ_P("U rlc.pdu.receive--rlc.sdu.push", "len%d::dc%d.p%d.si%d.sn%d.so%d", data_size, dc, p, si, sn, so);
   reception_actions(entity, pdu);
 
   if (p) {
@@ -771,7 +772,6 @@ void nr_rlc_entity_am_recv_pdu(nr_rlc_entity_t *_entity,
             __FILE__, __LINE__, __FUNCTION__);
     }
   }
-  LATSEQ_P("U rlc.pdu.received--rlc.sdu.push", "len%d::dc%d.p%d.si%d.sn%d.so%d", data_size, dc, p, si, sn, so);
   return;
 
 err:
