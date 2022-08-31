@@ -183,21 +183,20 @@ class Cluster:
 			return None
 		return imageName
 
-	def _get_image_size(self, sshSession, image, tag, keepImage = False):
-		imageName = self._pull_image(sshSession, image, tag)
-		if imageName is None:
+	def _get_image_size(self, sshSession, image, tag):
+		# get the SHA of the image we built using the image name and its tag
+		sshSession.command(f'oc describe is {image} | grep -A4 {tag}', '\$', 5)
+		result = re.search(f'image-registry.openshift-image-registry.svc:5000/oaicicd-ran/(?P<imageSha>{image}@sha256:[a-f0-9]+)', sshSession.getBefore())
+		if result is None:
 			return -1
-		sshSession.command('sudo podman image inspect --format="Size = {{.Size}} bytes" ' + imageName, '\$', 5)
-		if sshSession.getBefore().count('o such image') != 0:
-			return -1
+		imageSha = result.group("imageSha")
 
-		result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', sshSession.getBefore())
-		size = -1
-		if result is not None:
-			size = int(result.group("size"))
-		if not keepImage:
-			sshSession.command(f'sudo podman rmi {imageName}', '\$', 5)
-		return size
+		# retrieve the size
+		sshSession.command(f'oc get -o json isimage {imageSha} | jq -Mc "{{dockerImageSize: .image.dockerImageMetadata.Size}}"', '\$', 5)
+		result = re.search('{"dockerImageSize":(?P<size>[0-9]+)}', str(sshSession.getBefore()))
+		if result is None:
+			return -1
+		return int(result.group("size"))
 
 	def BuildClusterImage(self, HTML):
 		if self.ranRepository == '' or self.ranBranch == '' or self.ranCommitID == '':
@@ -342,7 +341,7 @@ class Cluster:
 			mySSH.command(f'mkdir -p cmake_targets/log/{image}', '\$', 5)
 			mySSH.command(f'python3 ci-scripts/docker_log_split.py --logfilename=cmake_targets/log/{image}.log', '\$', 5)
 			tag = imageTag if image != 'ran-base' else baseTag
-			size = self._get_image_size(mySSH, image, tag, keepImage=True)
+			size = self._get_image_size(mySSH, image, tag)
 			if size <= 0:
 				imageSize[image] = 'unknown'
 			else:
