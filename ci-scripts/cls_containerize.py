@@ -527,6 +527,7 @@ class Containerize():
 		errorandwarnings['warnings'] = 0
 		errorandwarnings['status'] = True
 		files['Target Image Creation'] = errorandwarnings
+		collectInfo = {}
 		collectInfo['proxy'] = files
 		mySSH.command('docker image inspect --format=\'Size = {{.Size}} bytes\' proxy:' + tag, '\$', 5)
 		result = re.search('Size *= *(?P<size>[0-9\-]+) *bytes', mySSH.getBefore())
