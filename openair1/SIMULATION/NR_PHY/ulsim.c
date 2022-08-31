@@ -277,6 +277,8 @@ int main(int argc, char **argv)
 {
   char c;
   int i;
+  int n_arg;
+  char ch;
   double SNR, snr0 = -2.0, snr1 = 2.0;
   double sigma, sigma_dB;
   double snr_step = .2;
@@ -295,6 +297,7 @@ int main(int argc, char **argv)
   //int8_t interf1 = -21, interf2 = -21;
   FILE *input_fd = NULL;
   SCM_t channel_model = AWGN;  //Rayleigh1_anticorr;
+  corr_level_t corr_level = CORR_LEVEL_LOW;
   uint16_t N_RB_DL = 106, N_RB_UL = 106, mu = 1;
 
   NB_UE_INST = 1;
@@ -399,7 +402,11 @@ int main(int argc, char **argv)
       break;
       
     case 'g':
-      switch ((char) *optarg) {
+
+      n_arg = atoi(optarg);
+      ch = (char) *argv[optind++];
+
+      switch (ch) {
         case 'A':
           channel_model = SCM_A;
           printf("Channel model: SCM-A\n");
@@ -457,6 +464,23 @@ int main(int argc, char **argv)
           printf("Unsupported channel model!\n");
           exit(-1);
       }
+
+      if (n_arg == 2) {
+        switch ((char) *argv[optind++]) {
+          case 'l':
+            corr_level = CORR_LEVEL_LOW;
+            break;
+          case 'm':
+            corr_level = CORR_LEVEL_MEDIUM;
+            break;
+          case 'h':
+            corr_level = CORR_LEVEL_HIGH;
+            break;
+          default:
+            printf("Invalid correlation level!\n");
+        }
+      }
+
       break;
       
     case 'i':
@@ -628,7 +652,7 @@ int main(int argc, char **argv)
       //printf("-d Use TDD\n");
       printf("-d Introduce delay in terms of number of samples\n");
       printf("-f Number of frames to simulate\n");
-      printf("-g and the channel model [A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300\n");
+      printf("-g Channel model configuration. Arguments list: Number of arguments = 2, {[A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300}, {[l] Low correlation, [m] Medium correlation, [h] High correlation}, e.g. -g 2 H l\n");
       printf("-h This message\n");
       printf("-i Change channel estimation technique. Arguments list: Number of arguments=2, Frequency domain {0:Linear interpolation, 1:PRB based averaging}, Time domain {0:Estimates of last DMRS symbol, 1:Average of DMRS symbols}. e.g. -i 2 1 0\n");
       //printf("-j Relative strength of second intefering eNB (in dB) - cell_id mod 3 = 2\n");
@@ -691,7 +715,6 @@ int main(int argc, char **argv)
 
   LOG_I( PHY,"++++++++++++++++++++++++++++++++++++++++++++++%i+++++++++++++++++++++++++++++++++++++++++",loglvl);  
 
-  corr_level_t corr_level = CORR_LEVEL_MEDIUM; // FIXME: Remove this hardcoded value
   UE2gNB = new_channel_desc_scm(n_tx,
                                 n_rx, channel_model,
                                 sampling_frequency/1e6,
