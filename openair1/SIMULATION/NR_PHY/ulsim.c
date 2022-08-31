@@ -651,7 +651,7 @@ int main(int argc, char **argv)
       //printf("-d Use TDD\n");
       printf("-d Introduce delay in terms of number of samples\n");
       printf("-f Number of frames to simulate\n");
-      printf("-g Channel model configuration. Arguments list: Number of arguments = 2, {[A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300}, {[l] Low correlation, [m] Medium correlation, [h] High correlation}, e.g. -g 2 H l\n");
+      printf("-g Channel model configuration. Arguments list: Number of arguments = 2, {[A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300}, {Correlation: [l] Low, [m] Medium, [h] High}, e.g. -g 2 H l\n");
       printf("-h This message\n");
       printf("-i Change channel estimation technique. Arguments list: Number of arguments=2, Frequency domain {0:Linear interpolation, 1:PRB based averaging}, Time domain {0:Estimates of last DMRS symbol, 1:Average of DMRS symbols}. e.g. -i 2 1 0\n");
       //printf("-j Relative strength of second intefering eNB (in dB) - cell_id mod 3 = 2\n");
