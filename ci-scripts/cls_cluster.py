@@ -343,7 +343,8 @@ class Cluster:
 			tag = imageTag if image != 'ran-base' else baseTag
 			size = self._get_image_size(mySSH, image, tag)
 			if size <= 0:
-				imageSize[image] = 'unknown'
+				imageSize[image] = 'unknown -- BUILD FAILED'
+				status = False
 			else:
 				imageSize[image] = f'{float(size) / 1000000:.1f} Mbytes'
 			logging.info(f'\u001B[1m{image} size is {imageSize[image]}\u001B[0m')
