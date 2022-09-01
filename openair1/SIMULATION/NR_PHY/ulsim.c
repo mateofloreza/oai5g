@@ -277,8 +277,6 @@ int main(int argc, char **argv)
 {
   char c;
   int i;
-  int n_arg;
-  char ch;
   double SNR, snr0 = -2.0, snr1 = 2.0;
   double sigma, sigma_dB;
   double snr_step = .2;
@@ -402,10 +400,7 @@ int main(int argc, char **argv)
       
     case 'g':
 
-      n_arg = atoi(optarg);
-      ch = (char) *argv[optind++];
-
-      switch (ch) {
+      switch ((char) *optarg) {
         case 'A':
           channel_model = SCM_A;
           printf("Channel model: SCM-A\n");
@@ -464,8 +459,8 @@ int main(int argc, char **argv)
           exit(-1);
       }
 
-      if (n_arg == 2) {
-        switch ((char) *argv[optind++]) {
+      if (optarg[1] == ',') {
+        switch (optarg[2]) {
           case 'l':
             corr_level = CORR_LEVEL_LOW;
             break;
@@ -483,9 +478,11 @@ int main(int argc, char **argv)
       break;
       
     case 'i':
-      for(i=0; i < atoi(optarg); i++){
-        chest_type[i] = atoi(argv[optind++]);
-      }
+      i=0;
+      do {
+        chest_type[i>>1] = atoi(&optarg[i]);
+        i+=2;
+      } while (optarg[i-1] == ',');
       break;
 	
     case 'k':
@@ -622,16 +619,20 @@ int main(int argc, char **argv)
 
    case 'T':
       enable_ptrs=1;
-      for(i=0; i < atoi(optarg); i++){
-        ptrs_arg[i] = atoi(argv[optind++]);
-      }
+      i=0;
+      do {
+        ptrs_arg[i>>1] = atoi(&optarg[i]);
+        i+=2;
+      } while (optarg[i-1] == ',');
       break;
 
     case 'U':
       modify_dmrs = 1;
-      for(i=0; i < atoi(optarg); i++){
-        dmrs_arg[i] = atoi(argv[optind++]);
-      }
+      i=0;
+      do {
+        dmrs_arg[i>>1] = atoi(&optarg[i]);
+        i+=2;
+      } while (optarg[i-1] == ',');
       break;
 
     case 'Q':
@@ -651,9 +652,9 @@ int main(int argc, char **argv)
       //printf("-d Use TDD\n");
       printf("-d Introduce delay in terms of number of samples\n");
       printf("-f Number of frames to simulate\n");
-      printf("-g Channel model configuration. Arguments list: Number of arguments = 2, {[A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300}, {Correlation: [l] Low, [m] Medium, [h] High}, e.g. -g 2 H l\n");
+      printf("-g Channel model configuration. Arguments list: Number of arguments = 2, {[A] SCM-A, [B] SCM-B, [C] SCM-C, [D] SCM-D, [E] EPA, [F] EVA, [G] ETU, [H] TDLA30, [I] TDLB100, [J] TDLC300}, {Correlation: [l] Low, [m] Medium, [h] High}, e.g. -g H,l\n");
       printf("-h This message\n");
-      printf("-i Change channel estimation technique. Arguments list: Number of arguments=2, Frequency domain {0:Linear interpolation, 1:PRB based averaging}, Time domain {0:Estimates of last DMRS symbol, 1:Average of DMRS symbols}. e.g. -i 2 1 0\n");
+      printf("-i Change channel estimation technique. Arguments list: Number of arguments=2, Frequency domain {0:Linear interpolation, 1:PRB based averaging}, Time domain {0:Estimates of last DMRS symbol, 1:Average of DMRS symbols}. e.g. -i 1,0\n");
       //printf("-j Relative strength of second intefering eNB (in dB) - cell_id mod 3 = 2\n");
       printf("-s Starting SNR, runs from SNR0 to SNR0 + 10 dB if ending SNR isn't given\n");
       printf("-m MCS value\n");
@@ -678,8 +679,8 @@ int main(int argc, char **argv)
       printf("-t Acceptable effective throughput (in percentage)\n");
       printf("-S Ending SNR, runs from SNR0 to SNR1\n");
       printf("-P Print ULSCH performances\n");
-      printf("-T Enable PTRS, arguments list: Number of arguments=2 L_PTRS{0,1,2} K_PTRS{2,4}, e.g. -T 2 0 2 \n");
-      printf("-U Change DMRS Config, arguments list: Number of arguments=4, DMRS Mapping Type{0=A,1=B}, DMRS AddPos{0:3}, DMRS Config Type{1,2}, Number of CDM groups without data{1,2,3} e.g. -U 4 0 2 0 1 \n");
+      printf("-T Enable PTRS, arguments list: Number of arguments=2 L_PTRS{0,1,2} K_PTRS{2,4}, e.g. -T 0,2 \n");
+      printf("-U Change DMRS Config, arguments list: Number of arguments=4, DMRS Mapping Type{0=A,1=B}, DMRS AddPos{0:3}, DMRS Config Type{1,2}, Number of CDM groups without data{1,2,3} e.g. -U 0,2,0,1 \n");
       printf("-Q If -F used, read parameters from file\n");
       printf("-Z If -Z is used, SC-FDMA or transform precoding is enabled in Uplink \n");
       printf("-W Num of layer for PUSCH\n");
