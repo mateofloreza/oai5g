@@ -1616,6 +1616,19 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
   struct complexd phase, alpha, beta;
   start_meas(&desc->random_channel);
 
+  // For AWGN channel, the received signal (Srx) is equal to transmitted signal (Stx) plus noise (N), i.e., Srx = Stx + N,
+  //  therefore, the channel matrix is the identity matrix.
+  if (desc->modelid == AWGN) {
+    for (aarx=0; aarx<desc->nb_rx; aarx++) {
+      for (aatx = 0; aatx < desc->nb_tx; aatx++) {
+        desc->ch[aarx+(aatx*desc->nb_rx)][0].r = aarx == aatx ? 1.0 : 0.0;
+        desc->ch[aarx+(aatx*desc->nb_rx)][0].i = 0.0;
+      }
+    }
+    stop_meas(&desc->random_channel);
+    desc->first_run = 0;
+    return 0;
+  }
   bzero(acorr,desc->nb_tx*desc->nb_rx*sizeof(struct complexd));
 
   for (i=0; i<(int)desc->nb_taps; i++) {
