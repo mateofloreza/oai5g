@@ -277,6 +277,16 @@ class Cluster:
 			status = ranbase_job is not None and self._wait_build_end(mySSH, [ranbase_job], 600)
 			if not status: logging.error('failure during build of ran-base')
 			mySSH.command(f'oc logs {ranbase_job} > cmake_targets/log/ran-base.log', '\$', 10)
+			# recover logs by mounting image
+			imageName = self._pull_image(mySSH, 'ran-base', baseTag)
+			if imageName is not None:
+				mySSH.command('mkdir -p cmake_targets/log/ran-base', '\$', 5)
+				mySSH.command(f'sudo podman create --name ran-base-log-recover {imageName}', '\$', 5)
+				mySSH.command('sudo podman cp ran-base-log-recover:/oai-ran/cmake_targets/log/. cmake_targets/log/ran-base', '\$', 5)
+				mySSH.command('sudo podman rm -f ran-base-log-recover', '\$', 5)
+				mySSH.command(f'sudo podman rmi {imageName}', '\$', 5)
+			else:
+				status = False
 
 		if status:
 			self._recreate_is(mySSH, 'oai-physim', imageTag, 'openshift/oai-physim-is.yaml')
