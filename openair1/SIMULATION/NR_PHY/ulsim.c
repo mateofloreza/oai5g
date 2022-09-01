@@ -660,7 +660,6 @@ int main(int argc, char **argv)
       printf("-n Number of trials to simulate\n");
       printf("-p Use extended prefix mode\n");
       printf("-q MCS table\n");
-      printf("-t Delay spread for multipath channel\n");
       printf("-u Set the numerology\n");
       printf("-w Start PRB for PUSCH\n");
       //printf("-x Transmission mode (1,2,6 for the moment)\n");
