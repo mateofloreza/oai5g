@@ -560,8 +560,8 @@ void nr_rx_sdu(const module_id_t gnb_mod_idP,
       if (UE_scheduling_control->sched_ul_bytes < 0)
         UE_scheduling_control->sched_ul_bytes = 0;
 
-      nr_process_mac_pdu(gnb_mod_idP, UE, CC_idP, frameP, slotP, sduP, sdu_lenP);
       LATSEQ_P("U mac.demux--mac.sdu.push", "len%d:rnti%d:frame%d.slot%d.harqpid%d.carriercompid%d", sdu_lenP, current_rnti, frameP, slotP, harq_pid, CC_idP);
+      nr_process_mac_pdu(gnb_mod_idP, UE, CC_idP, frameP, slotP, sduP, sdu_lenP);
     }
     else {
       NR_UE_ul_harq_t *cur_harq = &UE_scheduling_control->ul_harq_processes[harq_pid];
