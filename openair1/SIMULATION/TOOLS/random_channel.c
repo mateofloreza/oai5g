@@ -1621,7 +1621,7 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
   if (desc->modelid == AWGN) {
     for (aarx=0; aarx<desc->nb_rx; aarx++) {
       for (aatx = 0; aatx < desc->nb_tx; aatx++) {
-        desc->ch[aarx+(aatx*desc->nb_rx)][0].r = aarx == aatx ? 1.0 : 0.0;
+        desc->ch[aarx+(aatx*desc->nb_rx)][0].r = aarx%desc->nb_tx == aatx ? 1.0 : 0.0;
         desc->ch[aarx+(aatx*desc->nb_rx)][0].i = 0.0;
       }
     }
