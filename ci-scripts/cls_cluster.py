@@ -356,7 +356,8 @@ class Cluster:
 				imageSize[image] = 'unknown -- BUILD FAILED'
 				status = False
 			else:
-				imageSize[image] = f'{float(size) / 1000000:.1f} Mbytes'
+				sizeMb = float(size) / 1000000
+				imageSize[image] = f'{sizeMb:.1f} Mbytes (uncompressed: ~{sizeMb*2.5:.1f} Mbytes)'
 			logging.info(f'\u001B[1m{image} size is {imageSize[image]}\u001B[0m')
 
 		build_log_name = f'build_log_{self.testCase_id}'
