@@ -1623,8 +1623,11 @@ int random_channel(channel_desc_t *desc, uint8_t abstraction_flag) {
       for (aatx = 0; aatx < desc->nb_tx; aatx++) {
         desc->ch[aarx+(aatx*desc->nb_rx)][0].r = aarx%desc->nb_tx == aatx ? 1.0 : 0.0;
         desc->ch[aarx+(aatx*desc->nb_rx)][0].i = 0.0;
+        acorr[aarx+(aatx*desc->nb_rx)].r = desc->ch[aarx+(aatx*desc->nb_rx)][0].r;
+        acorr[aarx+(aatx*desc->nb_rx)].i = desc->ch[aarx+(aatx*desc->nb_rx)][0].i;
       }
     }
+    cblas_zcopy(desc->nb_tx*desc->nb_rx, (void *) acorr, 1, (void *) desc->a[0], 1);
     stop_meas(&desc->random_channel);
     desc->first_run = 0;
     return 0;
