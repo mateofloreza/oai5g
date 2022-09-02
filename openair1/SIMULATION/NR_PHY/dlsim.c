@@ -73,7 +73,6 @@
 
 #include <executables/softmodem-common.h>
 #include <openair3/ocp-gtpu/gtp_itf.h>
-#include "openair1/SIMULATION/NR_PHY/nr_gtp_stub.c"
 
 const char *__asan_default_options()
 {
@@ -101,9 +100,6 @@ nfapi_ue_release_request_body_t release_rntis;
 //Fixme: Uniq dirty DU instance, by global var, datamodel need better management
 instance_t DUuniqInstance=0;
 instance_t CUuniqInstance=0;
-
-
-// dummy functions
 
 int8_t nr_mac_rrc_data_ind_ue(const module_id_t module_id,
                               const int CC_id,
