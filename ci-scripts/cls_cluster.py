@@ -197,6 +197,25 @@ class Cluster:
 			return -1
 		return int(result.group("size"))
 
+	def _deploy_pod(self, sshSession, filename, timeout = 30):
+		sshSession.command(f'oc create -f {filename}', '\$', 10)
+		result = re.search(f'pod/(?P<pod>[a-zA-Z0-9_\-]+) created', sshSession.getBefore())
+		if result is None:
+			logging.error(f'could not deploy pod: {sshSession.getBefore()}')
+			return None
+		pod = result.group("pod")
+		while timeout > 0:
+			sshSession.command(f'oc get pod {pod} -o json | jq -Mc .status.phase', '\$', 5)
+			if re.search('"Running"', sshSession.getBefore()): return pod
+			timeout -= 1
+		logging.error(f'pod {pod} did not reach Running state')
+		self._undeploy_pod(sshSession, filename)
+		return None
+
+	def _undeploy_pod(self, sshSession, filename):
+		# to save time we start this in the background and trust that oc stops correctly
+		sshSession.command(f'oc delete -f {filename} &', '\$', 5)
+
 	def BuildClusterImage(self, HTML):
 		if self.ranRepository == '' or self.ranBranch == '' or self.ranCommitID == '':
 			HELP.GenericHelp(CONST.Version)
@@ -277,13 +296,11 @@ class Cluster:
 			if not status: logging.error('failure during build of ran-base')
 			mySSH.command(f'oc logs {ranbase_job} > cmake_targets/log/ran-base.log', '\$', 10)
 			# recover logs by mounting image
-			imageName = self._pull_image(mySSH, 'ran-base', baseTag)
-			if imageName is not None:
-				mySSH.command('mkdir -p cmake_targets/log/ran-base', '\$', 5)
-				mySSH.command(f'sudo podman create --name ran-base-log-recover {imageName}', '\$', 5)
-				mySSH.command('sudo podman cp ran-base-log-recover:/oai-ran/cmake_targets/log/. cmake_targets/log/ran-base', '\$', 5)
-				mySSH.command('sudo podman rm -f ran-base-log-recover', '\$', 5)
-				mySSH.command(f'sudo podman rmi {imageName}', '\$', 5)
+			self._retag_image_statement(mySSH, 'ran-base', 'ran-base', baseTag, 'openshift/ran-base-log-retrieval.yaml')
+			pod = self._deploy_pod(mySSH, 'openshift/ran-base-log-retrieval.yaml')
+			if pod is not None:
+				mySSH.command(f'oc rsync {pod}:/oai-ran/cmake_targets/log cmake_targets/log/ran-base', '\$', 5)
+				self._undeploy_pod(mySSH, 'openshift/ran-base-log-retrieval.yaml')
 			else:
 				status = False
 
