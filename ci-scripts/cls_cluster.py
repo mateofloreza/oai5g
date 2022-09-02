@@ -149,8 +149,7 @@ class Cluster:
 		else:
 			logging.warning(f"no pod found with name {shortName}")
 
-	def _wait_build_end(self, sshSession, jobs, timeout_sec):
-		# abort if multiple?
+	def _wait_build_end(self, sshSession, jobs, timeout_sec, check_interval_sec = 5):
 		logging.debug(f"waiting for jobs {jobs} to finish building")
 		while timeout_sec > 0:
 			# check status
@@ -163,8 +162,8 @@ class Cluster:
 			if jobs == []:
 				logging.debug('all jobs completed')
 				return True
-			time.sleep(5)
-			timeout_sec -= 5
+			time.sleep(check_interval_sec)
+			timeout_sec -= check_interval_sec
 		logging.error(f"timeout while waiting for end of build of {jobs}")
 		return False
 
