@@ -78,6 +78,8 @@ nfapi_mode_t nfapi_getmode(void) {
 }
 void nfapi_setmode(nfapi_mode_t nfapi_mode) { nfapi_mod=nfapi_mode; }
 
+NR_IF_Module_t *NR_IF_Module_init(int Mod_id) {return(NULL);}
+
 int main(int argc, char **argv)
 {
 	char c;

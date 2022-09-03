@@ -76,6 +76,8 @@ softmodem_params_t *get_softmodem_params(void) {
   return &softmodem_params;
 }
 
+NR_IF_Module_t *NR_IF_Module_init(int Mod_id) {return(NULL);}
+
 void nr_fill_dl_indication(nr_downlink_indication_t *dl_ind,
                            fapi_nr_dci_indication_t *dci_ind,
                            fapi_nr_rx_indication_t *rx_ind,

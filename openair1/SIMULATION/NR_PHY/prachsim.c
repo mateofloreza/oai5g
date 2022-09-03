@@ -87,6 +87,8 @@ softmodem_params_t *get_softmodem_params(void) {return 0;}
 instance_t DUuniqInstance=0;
 instance_t CUuniqInstance=0;
 
+NR_IF_Module_t *NR_IF_Module_init(int Mod_id) {return(NULL);}
+
 void
 rrc_data_ind(
   const protocol_ctxt_t *const ctxt_pP,

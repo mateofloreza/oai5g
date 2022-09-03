@@ -676,6 +676,7 @@ int main(int argc, char **argv)
   /* initialize the sin table */
   InitSinLUT();
 
+  get_softmodem_params()->usim_test = 1;
   get_softmodem_params()->phy_test = 1;
   get_softmodem_params()->do_ra = 0;
   set_softmodem_optmask(SOFTMODEM_DLSIM_BIT);

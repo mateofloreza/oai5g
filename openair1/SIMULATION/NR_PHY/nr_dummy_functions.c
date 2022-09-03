@@ -16,7 +16,6 @@ int oai_nfapi_nr_uci_indication(nfapi_nr_uci_indication_t *ind) { return(0);  }
 int oai_nfapi_nr_rach_indication(nfapi_nr_rach_indication_t *ind) { return(0);  }
 
 int32_t get_uldl_offset(int nr_bandP)                                       { return(0);  }
-NR_IF_Module_t *NR_IF_Module_init(int Mod_id)                               {return(NULL);}
 
 int dummy_nr_ue_dl_indication(nr_downlink_indication_t *dl_info)            { return(0);  }
 int dummy_nr_ue_ul_indication(nr_uplink_indication_t *ul_info)              { return(0);  }

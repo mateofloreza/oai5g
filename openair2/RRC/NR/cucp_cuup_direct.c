@@ -40,10 +40,6 @@
 
 extern RAN_CONTEXT_t RC;
 
-struct f1ap_cudu_inst_s;
-
-struct f1ap_cudu_inst_s *getCxt(enum F1_s, instance_t instanceP);
-
 void CU_create_UP_DL_tunnel(e1ap_bearer_setup_resp_t *resp,
                             e1ap_bearer_setup_req_t *req,
                             instance_t gtpInst,
