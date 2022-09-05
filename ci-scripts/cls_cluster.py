@@ -204,10 +204,12 @@ class Cluster:
 			logging.error(f'could not deploy pod: {sshSession.getBefore()}')
 			return None
 		pod = result.group("pod")
+		logging.debug(f'checking if pod {pod} is in Running state')
 		while timeout > 0:
 			sshSession.command(f'oc get pod {pod} -o json | jq -Mc .status.phase', '\$', 5, silent=True)
 			if re.search('"Running"', sshSession.getBefore()) is not None: return pod
 			timeout -= 1
+			time.sleep(1)
 		logging.error(f'pod {pod} did not reach Running state')
 		self._undeploy_pod(sshSession, filename)
 		return None
@@ -389,6 +391,8 @@ class Cluster:
 		for img in collectInfo:
 			for f in collectInfo[img]:
 				status = status and collectInfo[img][f]['status']
+		if not status:
+			logging.debug(collectInfo)
 
 		if status:
 			logging.info('\u001B[1m Building OAI Image(s) Pass\u001B[0m')
