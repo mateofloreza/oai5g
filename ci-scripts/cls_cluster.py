@@ -381,7 +381,7 @@ class Cluster:
 
 		mySSH.command('for pod in $(oc get pods | tail -n +2 | awk \'{print $1}\'); do oc delete pod ${pod}; done', '\$', 60)
 
-		mySSH.command('oc logout', '\$', 10)
+		mySSH.command('oc logout', '\$', 30)
 		mySSH.close()
 
 		# Analyze the logs
