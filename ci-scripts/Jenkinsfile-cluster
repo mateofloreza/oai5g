@@ -44,10 +44,14 @@ def eNB_CommitID
 def eNB_AllowMergeRequestProcess = false
 def eNB_TargetBranch
 
-def fileExistsGlob(fileNameWithGlob) {
-  def build_log_dir = sh returnStdout: true, script: 'find . -name \'' + fileNameWithGlob + '\' -type d'
-  build_log_dir = build_log_dir.trim()
-  return fileExists(build_log_dir)
+def directoryExistsGlob(fileNameWithGlob) {
+  /* if multiple directories match, will join their names and call fileExists() on that */
+  def dir = sh returnStdout: true, script: 'find . -name \'' + fileNameWithGlob + '\' -type d'
+  dir = dir.replaceAll("\n", "").trim()
+  echo "matching '" + fileNameWithGlob + "' found: '"  + dir + "'"
+  if (dir == "")
+    return false
+  return fileExists(dir)
 }
 
 //-------------------------------------------------------------------------------
@@ -227,12 +231,12 @@ pipeline {
       steps {
         script {
           dir ('ci-scripts') {
-            if (fileExistsGlob("build_log_*/")) {
+            if (directoryExistsGlob("build_log_*/")) {
               sh "zip -r -qq build_log_${env.BUILD_ID}.zip build_log_*/*"
               sh "rm -rf build_log_*/"
               archiveArtifacts artifacts: "build_log_${env.BUILD_ID}.zip"
             }
-            if (fileExistsGlob("test_log_*/")) {
+            if (directoryExistsGlob("test_log_*/")) {
               sh "zip -r -qq test_log_${env.BUILD_ID}.zip test_log_*/*"
               sh "rm -rf test_log_*/"
               archiveArtifacts artifacts: "test_log_${env.BUILD_ID}.zip"
