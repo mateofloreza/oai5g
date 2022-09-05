@@ -205,8 +205,8 @@ class Cluster:
 			return None
 		pod = result.group("pod")
 		while timeout > 0:
-			sshSession.command(f'oc get pod {pod} -o json | jq -Mc .status.phase', '\$', 5)
-			if re.search('"Running"', sshSession.getBefore()): return pod
+			sshSession.command(f'oc get pod {pod} -o json | jq -Mc .status.phase', '\$', 5, silent=True)
+			if re.search('"Running"', sshSession.getBefore()) is not None: return pod
 			timeout -= 1
 		logging.error(f'pod {pod} did not reach Running state')
 		self._undeploy_pod(sshSession, filename)
